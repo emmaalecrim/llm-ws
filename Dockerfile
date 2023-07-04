@@ -1,20 +1,19 @@
-FROM node:18
-
-# Create app directory
-WORKDIR /usr/src/app
-
-# Install app dependencies
-# A wildcard is used to ensure both package.json AND package-lock.json are copied
-# where available (npm@5+)
+FROM node:14-alpine3.10 as ts-compiler
+WORKDIR /usr/app
 COPY package*.json ./
+COPY tsconfig*.json ./
+RUN npm install
+COPY . ./
+RUN npm run build
 
-RUN yarn install
-# If you are building your code for production
+FROM node:14-alpine3.10 as ts-remover
+WORKDIR /usr/app
+COPY --from=ts-compiler /usr/app/package*.json ./
+COPY --from=ts-compiler /usr/app/lib ./
+RUN npm install --only=production
 
-# Bundle app source
-COPY . .
-
+FROM node
+WORKDIR /usr/app
+COPY --from=ts-remover /usr/app ./
 EXPOSE 8080
-
-CMD [ "yarn", "run", "build" ]
-CMD [ "yarn", "run", "start" ]
+CMD ["node" , "index.js"]

@@ -1,6 +1,6 @@
 import { WebSocket } from "ws";
 import { sendMessages } from "../utils/openai";
-import 'dotenv/config'
+
 import getMessages from "../utils/prompts/helpers";
 import { CreateChatCompletionResponse } from "openai";
 

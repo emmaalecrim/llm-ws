@@ -4,14 +4,14 @@ import { createServer } from 'http';
 import ChatCompletionController from './controllers/ChatCompletionController';
 import { authenticate } from './middleware/auth';
 
-import 'dotenv/config'
+
 
 const app = express()
 const server = createServer(app)
 
-server.listen(8001)
+server.listen(8080)
 
-console.debug("Server started at port 8001")
+console.debug("Server started at port 8080")
 
 const wss = new WebSocketServer({
   noServer: true,

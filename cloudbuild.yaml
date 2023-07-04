@@ -1,13 +1,9 @@
 steps:
 # Build the container image
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'gcr.io/truenation-dev/sw-server', '.']
-# Push the container image to Container Registry
+  args: ['build', '-t', 'europe-west2-docker.pkg.dev/truenation-dev/glasswall-ws/main', '.']
+# Push the container image to Artifact Registry
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'gcr.io/truenation-dev/sw-server']
-# Deploy container image to Cloud Run
-- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-  entrypoint: gcloud
-  args: ['run', 'deploy', 'ws-server', '--image', 'gcr.io/truenation-dev/sw-server', '--region', 'europe']
+  args: ['push', 'europe-west2-docker.pkg.dev/truenation-dev/glasswall-ws/main']
 images:
-  - gcr.io/truenation-dev/sw-server
+  - 'europe-west2-docker.pkg.dev/truenation-dev/glasswall-ws/main'
