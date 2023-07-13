@@ -1,6 +1,5 @@
 import { WebSocket } from "ws";
 import { sendMessages } from "../utils/openai";
-
 import getMessages from "../utils/prompts/helpers";
 import { CreateChatCompletionResponse } from "openai";
 
