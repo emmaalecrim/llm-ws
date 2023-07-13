@@ -14,7 +14,7 @@ type messageConfig = {
 const sendMessages = (
   messages: any[],
   config: messageConfig = {},
-  model: string = "gpt-3.5-turbo"
+  model: string = "gpt-4"
 ) =>
   openai.createChatCompletion({
     model,
