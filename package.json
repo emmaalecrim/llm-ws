@@ -18,7 +18,6 @@
     "auth:refresh": "gcloud auth login && firebase login --reauth"
   },
   "dependencies": {
-    "express": "^4.18.2",
     "firebase-admin": "^11.9.0",
     "openai": "^3.2.1",
     "ws": "^8.13.0",
