@@ -5,7 +5,7 @@ import { CreateChatCompletionResponse } from "openai";
 
 // const decoder = new TextDecoder("utf-8")
 
-const ChatCompletionController = async (ws: WebSocket, parsedData: any) => {
+const completionStreamController = async (ws: WebSocket, parsedData: any) => {
     try {
         const { data, type } = parsedData
         const { messages, config } = getMessages(type, data)
@@ -23,4 +23,4 @@ const ChatCompletionController = async (ws: WebSocket, parsedData: any) => {
     }
 }
 
-export default ChatCompletionController 
+export default completionStreamController 
