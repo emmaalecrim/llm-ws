@@ -1,20 +1,20 @@
-import { applicationDefault, initializeApp } from "firebase-admin/app";
+import { applicationDefault, cert, initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
 
 const app = initializeApp({
-    credential: applicationDefault(),
+    credential: cert(require("./dev-cert.json")) || applicationDefault(),
 });
 
-console.log("Firebase Admin SDK initialized", app.name);
+console.info("Firebase Admin SDK initialized", app.name);
 
 const firestore = getFirestore(app);
 
-console.log("Firestore initialized");
+console.info("Firestore initialized");
 
 const auth = getAuth(app)
 
-console.debug("Auth initialized");
+console.info("Auth initialized");
 
 const getIdFromToken = async (token: string) => auth?.verifyIdToken(token)
 
