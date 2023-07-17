@@ -1,4 +1,5 @@
 import { Configuration, OpenAIApi } from "openai";
+import 'dotenv/config'
 
 
 const configuration = new Configuration({
@@ -14,7 +15,7 @@ type messageConfig = {
 const sendMessages = (
   messages: any[],
   config: messageConfig = {},
-  model: string = "gpt-4"
+  model: string = "gpt-3.5-turbo"
 ) =>
   openai.createChatCompletion({
     model,
