@@ -12,7 +12,10 @@ const completionStreamController = async (ws: WebSocket, parsedData: any) => {
         let prompt: promptTypes = "tone"
         switch (type) {
             case "improve":
-                if (data?.tone == "short") prompt = "short"
+                if (data?.tone == "short") {
+                    prompt = "short"
+                    break
+                }
                 prompt = "tone"
                 break;
             default:
