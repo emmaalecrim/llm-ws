@@ -2,13 +2,24 @@ import { WebSocket } from "ws";
 import { sendMessages } from "../utils/openai";
 import getMessages from "../utils/prompts/helpers";
 import { CreateChatCompletionResponse } from "openai";
+import { promptTypes } from "../utils/prompts/prompt-base";
 
 // const decoder = new TextDecoder("utf-8")
 
 const completionStreamController = async (ws: WebSocket, parsedData: any) => {
     try {
         const { data, type } = parsedData
-        const { messages, config } = getMessages(type, data)
+        let prompt: promptTypes = "tone"
+        switch (type) {
+            case "improve":
+                if (data?.tone == "short") prompt = "short"
+                prompt = "tone"
+                break;
+            default:
+                prompt = type
+                break
+        }
+        const { messages, config } = getMessages(prompt, data)
         console.debug('Starting chat completion')
         const stream: CreateChatCompletionResponse = await sendMessages(messages, config)
         // @ts-expect-error - missing type
