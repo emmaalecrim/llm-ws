@@ -1,9 +1,9 @@
-import { applicationDefault, cert, initializeApp } from "firebase-admin/app";
+import { applicationDefault, initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
 
 const app = initializeApp({
-    credential: cert(require("./dev-cert.json")) || applicationDefault(),
+    credential: applicationDefault(),
 });
 
 console.info("Firebase Admin SDK initialized", app.name);
