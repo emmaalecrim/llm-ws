@@ -13,9 +13,9 @@
     "dev": "nodemon ./src/index.ts",
     "docker:build": "docker build -t glasswall-ws .",
     "docker:run": "docker run -p 8080:8080 glasswall-ws",
-    "deploy:build": "gcloud builds submit --region=global --config cloudbuild.yaml",
+    "deploy:build": "gcloud config set project truenation-dev && gcloud builds submit --region=global --config cloudbuild.yaml",
     "deploy:build:prod": "gcloud builds submit --region=global --config prod-cloudbuild.yaml",
-    "deploy": "gcloud builds submit --region=global --config cloudbuild.yaml && gcloud run deploy glasswall-ws --image europe-west2-docker.pkg.dev/truenation-dev/glasswall-ws/main",
+    "deploy": "gcloud config set project truenation-dev && gcloud builds submit --region=global --config cloudbuild.yaml && gcloud run deploy glasswall-ws --image europe-west2-docker.pkg.dev/truenation-dev/glasswall-ws/main",
     "deploy:prod": "gcloud builds submit --region=global --config prod-cloudbuild.yaml && gcloud run deploy glasswall-ws --image europe-docker.pkg.dev/truefilter-10000/glasswall-ws/main",
     "auth:refresh": "gcloud auth login && firebase login --reauth"
   },
