@@ -1,0 +1,9 @@
+steps:
+# Build the container image
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'europe-docker.pkg.dev/truefilter-10000/glasswall-ws/main', '.']
+# Push the container image to Artifact Registry
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'europe-docker.pkg.dev/truefilter-10000/glasswall-ws/main']
+images:
+  - 'europe-docker.pkg.dev/truefilter-10000/glasswall-ws/main'

@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "truenation-dev"
+    "default": "truenation-dev",
+    "prod": "truefilter-1000"
   }
 }
