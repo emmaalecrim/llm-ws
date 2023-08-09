@@ -1,0 +1,3 @@
+[submodule "src/utils/prompts/prompt-base"]
+	path = src/utils/prompts/prompt-base
+	url = git@github.com:True-Global/prompt-base.git
