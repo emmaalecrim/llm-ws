@@ -28,7 +28,7 @@ const completionStreamController = async (ws: WebSocket, parsedData: any) => {
         // @ts-expect-error - missing type
         for await (const chunk of stream) {
             ws.send(Buffer.from(chunk))
-            console.debug('Sending chunk:\n ', chunk.toString())
+            // console.debug('Sending chunk:\n ', chunk.toString())
         }
         console.debug('Chat completion finished')
     } catch (e: any) {
