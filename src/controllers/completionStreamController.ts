@@ -23,7 +23,7 @@ const completionStreamController = async (ws: WebSocket, parsedData: any) => {
                 break
         }
         const { messages, config } = getMessages(prompt, data)
-        console.debug('Starting chat completion: ', messages)
+        // console.debug('Starting chat completion: ', messages)
         const stream: CreateChatCompletionResponse = await sendMessages(messages, config)
         // @ts-expect-error - missing type
         for await (const chunk of stream) {
