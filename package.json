@@ -1,7 +1,7 @@
 {
-  "name": "chatgpt-stream-proxy",
+  "name": "llm-ws",
   "version": "1.0.0",
-  "description": "My attempt at a basic open ai api proxy",
+  "description": "Wireframes for advanced LLM appls in nodejs",
   "main": "index.ts",
   "repository": "https://github.com/emmaalecrim/chatgpt-stream-proxy.git",
   "author": "emmaalecrim <emmaalecrim@gmail.com>",
