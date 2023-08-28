@@ -1,28 +1,20 @@
-import { Configuration, OpenAIApi } from "openai";
-import 'dotenv/config'
+import { GetChatCompletionsOptions, OpenAIClient, OpenAIKeyCredential } from "@azure/openai";
+// Load the .env file if it exists
+import * as dotenv from "dotenv";
+dotenv.config();
 
+const client = new OpenAIClient(new OpenAIKeyCredential(process.env.OPENAI_KEY || ""));
 
-const configuration = new Configuration({
-  apiKey: process.env.OPENAI_KEY,
-});
-
-const openai = new OpenAIApi(configuration);
-
-type messageConfig = {
-  temperature?: number;
-};
 
 const sendMessages = (
   messages: any[],
-  config: messageConfig = {},
+  config: GetChatCompletionsOptions = {},
   model: string = "gpt-3.5-turbo"
 ) =>
-  openai.createChatCompletion({
+  client.listChatCompletions(
     model,
     messages,
-    stream: true,
-    ...config,
-  }, { responseType: "stream" })
-    .then((res) => res?.data);
+    config
+  )
 
 export { sendMessages };

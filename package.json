@@ -20,9 +20,9 @@
     "auth:refresh": "gcloud auth login && firebase login --reauth"
   },
   "dependencies": {
+    "@azure/openai": "^1.0.0-beta.5",
     "dotenv": "^16.3.1",
     "firebase-admin": "^11.9.0",
-    "openai": "^3.2.1",
     "ws": "^8.13.0"
   },
   "devDependencies": {
