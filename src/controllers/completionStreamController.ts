@@ -16,8 +16,10 @@ const promptTypes = ['reply', 'improve', 'compose', 'customize']
 
 // New function for when 'type' equals 'summarize'
 const handleSummarize = async (ws: WebSocket, data: any): Promise<void> => {
+    const { text, length = 280 } = data;
     // https://help.openai.com/en/articles/4936856-what-are-tokens-and-how-to-count-them
-    const summary = await summerizeToFitContextBudget(data.text, data.length || 280);
+    // lenght is the number of tokens, not the number of characters. Aproximately 4 characters per token.
+    const summary = await summerizeToFitContextBudget(text, length * 4);
     ws.send(Buffer.from(JSON.stringify({ summary }), ENCODING));
     if (debug)
         console.log(`Summary: ${summary}`);

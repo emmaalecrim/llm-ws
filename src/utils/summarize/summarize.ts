@@ -48,15 +48,15 @@ export async function summerizeToFitContextBudget(text: string, targetWordCount:
         return await cleanUpContent(chunk, targetWordCount);
     }));
 
-    // console.log('************Finished cleaning up the chunks************');
+    console.log('************Finished cleaning up the chunks************');
 
     // return if the targetWordCount already reached after step 2
     if (cleanedChunks.reduce((acc, chunk) => acc + chunk.split(' ').length, 0) <= targetWordCount) {
-        // console.log('enough content is removed, return the cleaned chunks');
+        console.log('enough content is removed, return the cleaned chunks');
         return cleanedChunks.join('\n');
     }
 
-    // console.log('Simply removing non-sensical contents is not enough, proceed with recursive summerization');
+    console.log('Simply removing non-sensical contents is not enough, proceed with recursive summerization');
 
     // 3) Reduce the length of each chunk proportionally based on the text's length over the total length
     const totalLength = cleanedChunks.reduce((acc, chunk) => acc + chunk.split(' ').length, 0);
@@ -90,7 +90,7 @@ async function cleanUpContent(chunk: string, ignored_was_targetWordCount: number
             ,
             "gpt-3.5-turbo-16k"
         );
-        return chatResponse?.choices[0]?.message?.content || '';
+        return chatResponse?.choices[0]?.message?.content ?? '';
     } catch (error: any) {
         return '';
     }
