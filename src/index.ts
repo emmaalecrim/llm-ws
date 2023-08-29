@@ -4,7 +4,7 @@ import { getIdFromToken } from './utils/firebase';
 import { config } from 'dotenv';
 import express from 'express';
 import http from 'http';
-import { IParsedData, validateInput } from './utils/schemas/completion';
+import { InputData, validateInput } from './utils/schemas/completion';
 
 config();
 const PORT = process.env.PORT || 8080;
@@ -41,7 +41,7 @@ wss.on('connection', function connection(ws: WebSocket) {
         const { success, data } = validateInput(parsedData)
         console.debug('Parsed data:', data)
         if (!success) return ws.send(Buffer.from(JSON.stringify({ error: "invalid input" })))
-        const validatedInput = data as IParsedData
+        const validatedInput = data as InputData
         try {
           if (validatedInput.auth === process.env.AUTH_BYPASS_TOKEN) {
             console.error("AUTH BYPASS ENABLED - IF YOURE SEEING THIS IN PRODUCTION, SOMETHING IS WRONG")
@@ -54,7 +54,7 @@ wss.on('connection', function connection(ws: WebSocket) {
           ws.send(Buffer.from(JSON.stringify({ error: `Error in getIdFromToken: ${e.message}` })))
           return ws.close()
         }
-        return completionStreamController(ws, parsedData)
+        return completionStreamController(ws, validatedInput)
       }
     } catch (e: any) {
       console.error('Error in controller:', e)

@@ -40,7 +40,7 @@ const operationType = z.union([
     promptTypes,
 ]);
 
-const iParsedData = z.object({
+const inputData = z.object({
     type: operationType,
     data: MessageParams,
     auth: z.string(),
@@ -48,9 +48,9 @@ const iParsedData = z.object({
 
 // Infer types from schemas
 export type OperationType = z.infer<typeof operationType>;
-export type IParsedData = z.infer<typeof iParsedData>;
+export type InputData = z.infer<typeof inputData>;
 
-export const validateInput = (data: any): { success: boolean, data?: IParsedData, error?: ZodError } => iParsedData.safeParse(data)
+export const validateInput = (data: any): { success: boolean, data?: InputData, error?: ZodError } => inputData.safeParse(data)
 
 
 
