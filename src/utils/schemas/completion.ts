@@ -26,12 +26,18 @@ export const UserMessageParams = z.object({
 export const MessageParams = SysMessageParams.and(UserMessageParams);
 export type MessageParams = z.infer<typeof MessageParams>;
 
-const operationType = z.union([
-    z.literal('summarize'),
+const promptTypes = z.union([
     z.literal('reply'),
     z.literal('improve'),
     z.literal('compose'),
-    z.literal('customize')
+    z.literal('customize'),
+]);
+
+export type PromptTypes = z.infer<typeof promptTypes>;
+
+const operationType = z.union([
+    z.literal('summarize'),
+    promptTypes,
 ]);
 
 const iParsedData = z.object({

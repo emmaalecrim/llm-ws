@@ -2,19 +2,15 @@ import { WebSocket } from "ws";
 import { sendMessagesAndGetList } from "../utils/openai";
 import getMessages from "../utils/prompts/helpers";
 import { ChatCompletions } from "@azure/openai";
-
-
-// Load the .env file if it exists
 import { config } from "dotenv";
-import { IParsedData, MessageParams } from "../utils/schemas/completion";
+import { IParsedData, MessageParams, PromptTypes } from "../utils/schemas/completion";
 
 // Setting up the .env configs
 config();
 const ENCODING = "utf-8";
 const debug = process.env.DEBUG === "true";
 
-type PromptTypes = "reply" | "improve" | "compose" | "customize";
-
+const promptTypes = ['reply', 'improve', 'compose', 'customize']
 
 
 // New function for when 'type' equals 'summarize'
@@ -51,7 +47,7 @@ const completionStreamController = async (ws: WebSocket, parsedData: IParsedData
         const { type, data } = parsedData;
         if (type === 'summarize') {
             return await handleSummarize(ws, data);
-        } else {
+        } else if (promptTypes.includes(type)) {
             return await handlePromptTypes(ws, { prompt: type, data });
         }
     } catch (e: any) {
