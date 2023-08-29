@@ -41,7 +41,7 @@ const completionStreamController = async (ws: WebSocket, parsedData: any): Promi
                 for (const choice of event.choices) {
                     const delta = choice.delta?.content;
                     if (delta !== undefined) {
-                        console.log(`Chatbot: ${delta}`);
+                        console.log(`Chunk Delta: ${delta}`);
                     }
                 }
             }
