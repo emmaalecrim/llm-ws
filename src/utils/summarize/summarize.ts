@@ -89,7 +89,7 @@ async function cleanUpContent(chunk: string, ignored_was_targetWordCount: number
             ,
             "gpt-3.5-turbo-16k"
         );
-        return chatResponse?.content ?? '';
+        return chatResponse?.choices[0]?.message?.content || '';
     } catch (error: any) {
         return '';
     }
