@@ -2,24 +2,20 @@ import { WebSocket } from "ws";
 import { sendMessagesAndGetList } from "../utils/openai";
 import getMessages from "../utils/prompts/helpers";
 import { ChatCompletions } from "@azure/openai";
-import { messengerArgs } from "../utils/prompts/prompt-base";
+
 
 // Load the .env file if it exists
 import { config } from "dotenv";
+import { IParsedData, MessageParams } from "../utils/schemas/completion";
 
 // Setting up the .env configs
 config();
 const ENCODING = "utf-8";
 const debug = process.env.DEBUG === "true";
 
-type PromptTypes = "reply" | "improve" | "compose" | "customize"
-type OperationType = 'summarize' | PromptTypes
+type PromptTypes = "reply" | "improve" | "compose" | "customize";
 
-interface IParsedData {
-    type: OperationType;
-    data: any;
-    auth: string;
-}
+
 
 // New function for when 'type' equals 'summarize'
 const handleSummarize = async (ws: WebSocket, data: any): Promise<void> => {
@@ -27,7 +23,7 @@ const handleSummarize = async (ws: WebSocket, data: any): Promise<void> => {
 }
 
 // Former processing when 'type' equals 'PromptTypes'
-const handlePromptTypes = async (ws: WebSocket, { prompt, data }: { prompt: PromptTypes, data: messengerArgs }): Promise<void> => {
+const handlePromptTypes = async (ws: WebSocket, { prompt, data }: { prompt: PromptTypes, data: MessageParams }): Promise<void> => {
     // Getting message and configuration
     const { messages, config } = getMessages(prompt, data);
     const events: AsyncIterable<ChatCompletions> = sendMessagesAndGetList(messages, config);

@@ -4,6 +4,7 @@ import { getIdFromToken } from './utils/firebase';
 import { config } from 'dotenv';
 import express from 'express';
 import http from 'http';
+import { IParsedData, validateInput } from './utils/schemas/completion';
 
 config();
 const PORT = process.env.PORT || 8080;
@@ -27,20 +28,23 @@ wss.on('connection', function connection(ws: WebSocket) {
   // @ts-expect-error - isAlive is not a property of WebSocket
   ws.on('pong', () => ws.isAlive = true); // WebSocket Ping/Pong
 
-  ws.on('message', async (data: RawData) => {
+  ws.on('message', async (rawData: RawData) => {
     try {
-      if (Buffer.isBuffer(data)) {
-        if (data.toString() === "ping") {
+      if (Buffer.isBuffer(rawData)) {
+        if (rawData.toString() === "ping") {
           // @ts-expect-error - isAlive is not a property of WebSocket
           ws.isAlive = false;
           ws.ping('', false); // WebSocket Ping/Pong
           return ws.send("pong");
         }
-        const parsedData = JSON.parse(data.toString())
-        console.debug('payload received:', parsedData)
+        const parsedData = JSON.parse(rawData.toString())
+        const { success, data } = validateInput(parsedData)
+        console.debug('Parsed data:', data)
+        if (!success) return ws.send(Buffer.from(JSON.stringify({ error: "invalid input" })))
+        const validatedInput = data as IParsedData
         try {
-          if (parsedData?.auth === "foobar") {
-            console.error("AUTH BYPASS ENABLED: IF YOURE SEEING THIS IN PRODUCTION, SOMETHING IS WRONG")
+          if (validatedInput?.auth === process.env.AUTH_BYPASS_TOKEN) {
+            console.error("AUTH BYPASS ENABLED - IF YOURE SEEING THIS IN PRODUCTION, SOMETHING IS WRONG")
           } else {
             const id = await getIdFromToken(parsedData?.auth) // Improved error handling for authentication
             if (!id) ws.send(Buffer.from(JSON.stringify({ error: "invalid auth token" })))
