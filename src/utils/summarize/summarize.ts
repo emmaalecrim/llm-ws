@@ -1,3 +1,4 @@
+// Modifyed from https://github.com/enricoros/big-agi.git 's great work
 import { sendMessages as callChatGenerate } from "../openai";
 
 // prompt to be tried when doing recursive summerization.
