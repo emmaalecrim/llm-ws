@@ -1,5 +1,5 @@
 import { WebSocket } from "ws";
-import { sendMessages } from "../utils/openai";
+import { sendMessagesAndGetList } from "../utils/openai";
 import getMessages from "../utils/prompts/helpers";
 import { promptTypes } from "../utils/prompts/prompt-base";
 import { ChatCompletions } from "@azure/openai";
@@ -33,7 +33,7 @@ const completionStreamController = async (ws: WebSocket, parsedData: any): Promi
 
         const { messages, config } = getMessages(prompt, data);
 
-        const events: AsyncIterable<ChatCompletions> = sendMessages(messages, config);
+        const events: AsyncIterable<ChatCompletions> = sendMessagesAndGetList(messages, config);
 
         for await (const event of events) {
             ws.send(Buffer.from(JSON.stringify(event), "utf-8"));
