@@ -43,7 +43,7 @@ wss.on('connection', function connection(ws: WebSocket) {
         if (!success) return ws.send(Buffer.from(JSON.stringify({ error: "invalid input" })))
         const validatedInput = data as IParsedData
         try {
-          if (validatedInput?.auth === process.env.AUTH_BYPASS_TOKEN) {
+          if (validatedInput.auth === process.env.AUTH_BYPASS_TOKEN) {
             console.error("AUTH BYPASS ENABLED - IF YOURE SEEING THIS IN PRODUCTION, SOMETHING IS WRONG")
           } else {
             const id = await getIdFromToken(parsedData?.auth) // Improved error handling for authentication
