@@ -48,7 +48,7 @@ export async function summerizeToFitContextBudget(text: string, targetWordCount:
         return await cleanUpContent(chunk, targetWordCount);
     }));
 
-    console.log('************Finished cleaning up the chunks************');
+    // console.log('************Finished cleaning up the chunks************');
 
     // return if the targetWordCount already reached after step 2
     if (cleanedChunks.reduce((acc, chunk) => acc + chunk.split(' ').length, 0) <= targetWordCount) {
