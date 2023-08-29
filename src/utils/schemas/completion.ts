@@ -17,7 +17,7 @@ export const SysMessageParams = z.object({
 });
 
 export const UserMessageParams = z.object({
-    text: z.string(),
+    text: z.string().trim(),
     length: ResponseLength.optional(),
     previousResponse: z.string().optional(),
     originalText: z.string().optional(),
