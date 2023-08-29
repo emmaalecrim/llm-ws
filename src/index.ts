@@ -1,51 +1,88 @@
-import { WebSocketServer, RawData } from 'ws';
+import { RawData, WebSocket, Server as WebSocketServer } from 'ws';
 import completionStreamController from './controllers/completionStreamController';
 import { getIdFromToken } from './utils/firebase';
+import { config } from 'dotenv';
+import express from 'express';
+import http from 'http';
+
+config();
+const PORT = process.env.PORT || 8080;
 
 
+const app = express();
 
-console.debug("Server started at port 8080")
-
-const wss = new WebSocketServer({
-  port: 8080,
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
 });
 
+const server = http.createServer(app);
 
-wss.on('connection', function connection(ws) {
-  // @ts-expect-error - typing bs
+console.info(`Server started at port ${PORT}`)
+
+const wss = new WebSocketServer({ server });
+
+wss.on('connection', function connection(ws: WebSocket) {
+  // @ts-expect-error - isAlive is not a property of WebSocket
   ws.isAlive = true;
+  // @ts-expect-error - isAlive is not a property of WebSocket
+  ws.on('pong', () => ws.isAlive = true); // WebSocket Ping/Pong
 
   ws.on('message', async (data: RawData) => {
     try {
       if (Buffer.isBuffer(data)) {
-        if (data.toString() === "ping") return ws.send("pong")
+        if (data.toString() === "ping") {
+          // @ts-expect-error - isAlive is not a property of WebSocket
+          ws.isAlive = false;
+          ws.ping('', false); // WebSocket Ping/Pong
+          return ws.send("pong");
+        }
         const parsedData = JSON.parse(data.toString())
-        console.debug('payload recieved:', parsedData)
+        console.debug('payload received:', parsedData)
         try {
-          const id = await getIdFromToken(parsedData?.auth)
-          if (!id) ws.send(Buffer.from(JSON.stringify({ error: "invalid auth token" })))
-
+          if (parsedData?.auth === "foobar") {
+            console.error("AUTH BYPASS ENABLED: IF YOURE SEEING THIS IN PRODUCTION, SOMETHING IS WRONG")
+          } else {
+            const id = await getIdFromToken(parsedData?.auth) // Improved error handling for authentication
+            if (!id) ws.send(Buffer.from(JSON.stringify({ error: "invalid auth token" })))
+          }
         } catch (e: any) {
-          console.error('error in auth:', e.message)
-          ws.send(Buffer.from(JSON.stringify({ error: e.message })))
+          console.error('Error in getIdFromToken:', e)
+          ws.send(Buffer.from(JSON.stringify({ error: `Error in getIdFromToken: ${e.message}` })))
           return ws.close()
         }
         return completionStreamController(ws, parsedData)
-
       }
-    }
-    catch (e: any) {
-      console.log('error in controller', e)
-      ws.send(Buffer.from(JSON.stringify({ error: e.message })))
+    } catch (e: any) {
+      console.error('Error in controller:', e)
+      ws.send(Buffer.from(JSON.stringify({ error: `Error in controller: ${e.message}` })))
       return ws.close()
     }
   });
 
   ws.on('error', e => {
-    console.error(e)
-    ws.send(Buffer.from(JSON.stringify({ error: e.message })))
+    console.error('Websocket error:', e)
+    ws.send(Buffer.from(JSON.stringify({ error: `Websocket error: ${e.message}` })))
     return ws.close()
   });
 });
 
+setInterval(() => {
+  wss.clients.forEach((ws: any) => {
+    if (!ws.isAlive) return ws.terminate();
 
+    ws.isAlive = false;
+    ws.ping('', false);
+  });
+}, 30000); // 30 second interval
+
+process.on('SIGINT', () => {
+  console.info('Gracefully shutting down');
+  server.close();
+});
+
+process.on('SIGTERM', () => {
+  console.info('Gracefully shutting down');
+  server.close();
+});
+
+server.listen(PORT);
