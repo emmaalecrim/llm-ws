@@ -11,7 +11,7 @@ export const MessageType = z.object({
 export const SysMessageParams = z.object({
     host: z.string(),
     arch: z.string(),
-    suggestion: z.string(),
+    suggestion: z.string().optional(),
     calendarLink: z.string().optional(),
     signOffName: z.string().optional(),
 });
@@ -23,7 +23,16 @@ export const UserMessageParams = z.object({
     originalText: z.string().optional(),
 });
 
-export const MessageParams = SysMessageParams.and(UserMessageParams);
+export const summarizeParams = z.object({
+    text: z.string().trim(),
+    length: z.coerce.number().int().positive().optional(),
+});
+
+export type SummarizeParams = z.infer<typeof summarizeParams>;
+
+// These types are duplicated in prompt-base/collections/shared and will be kept for compatibility
+//  until I have time to refactor
+export const MessageParams = SysMessageParams.and(UserMessageParams).or(summarizeParams);
 export type MessageParams = z.infer<typeof MessageParams>;
 
 const promptTypes = z.union([
