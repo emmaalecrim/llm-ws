@@ -3,7 +3,8 @@ import { sendMessagesAndGetList } from "../utils/openai";
 import getMessages from "../utils/prompts/helpers";
 import { ChatCompletions } from "@azure/openai";
 import { config } from "dotenv";
-import { IParsedData, MessageParams, PromptTypes } from "../utils/schemas/completion";
+import { InputData, MessageParams, PromptTypes } from "../utils/schemas/completion";
+import { summerizeToFitContextBudget } from "../utils/summarize/summarize";
 
 // Setting up the .env configs
 config();
@@ -15,7 +16,11 @@ const promptTypes = ['reply', 'improve', 'compose', 'customize']
 
 // New function for when 'type' equals 'summarize'
 const handleSummarize = async (ws: WebSocket, data: any): Promise<void> => {
-    // Empty function as defined in the question
+    // https://help.openai.com/en/articles/4936856-what-are-tokens-and-how-to-count-them
+    const summary = await summerizeToFitContextBudget(data.text, data.length || 280);
+    ws.send(Buffer.from(JSON.stringify({ summary }), ENCODING));
+    if (debug)
+        console.log(`Summary: ${summary}`);
 }
 
 // Former processing when 'type' equals 'PromptTypes'
@@ -42,9 +47,9 @@ const handlePromptTypes = async (ws: WebSocket, { prompt, data }: { prompt: Prom
 }
 
 
-const completionStreamController = async (ws: WebSocket, parsedData: IParsedData): Promise<void> => {
+const completionStreamController = async (ws: WebSocket, validatedData: InputData): Promise<void> => {
     try {
-        const { type, data } = parsedData;
+        const { type, data } = validatedData;
         if (type === 'summarize') {
             return await handleSummarize(ws, data);
         } else if (promptTypes.includes(type)) {
