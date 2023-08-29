@@ -62,7 +62,7 @@ export async function summerizeToFitContextBudget(text: string, targetWordCount:
     const summarizedChunks = await Promise.all(cleanedChunks.map(async chunk => {
         const chunkLength = chunk.split(' ').length;
         const chunkTargetWordCount = Math.floor(targetWordCount * (chunkLength / totalLength));
-        return await recursiveSummerize(chunk, llmId, chunkTargetWordCount, 0); // Add the initial depth value
+        return await recursiveSummerize(chunk, chunkTargetWordCount, 0); // Add the initial depth value
     }));
 
     // 4) Combine the summarized chunks and return
