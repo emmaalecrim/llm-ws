@@ -1,9 +1,9 @@
 {
   "name": "llm-ws",
   "version": "1.0.0",
-  "description": "Wireframes for advanced LLM appls in nodejs",
+  "description": "Wireframes for LLM agent apps in node and ts",
   "main": "index.ts",
-  "repository": "https://github.com/emmaalecrim/chatgpt-stream-proxy.git",
+  "repository": "https://github.com/emmaalecrim/llm-ws.git",
   "author": "emmaalecrim <emmaalecrim@gmail.com>",
   "license": "MIT",
   "scripts": {
