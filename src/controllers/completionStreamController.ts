@@ -25,7 +25,14 @@ const handleSummarize = async (ws: WebSocket, data: any): Promise<void> => {
         console.log(`Summary: ${summary}`);
 }
 
-// Former processing when 'type' equals 'PromptTypes'
+/**
+ * Former processing when 'type' equals 'PromptTypes'
+ * @param {WebSocket} ws
+ * @param {any} {prompt
+ * @param {any} data}:{prompt:PromptTypes
+ * @param {MessageParams}} data
+ * @returns {any}
+ */
 const handlePromptTypes = async (ws: WebSocket, { prompt, data }: { prompt: PromptTypes, data: MessageParams }): Promise<void> => {
     // Getting message and configuration
     const { messages, config } = getMessages(prompt, data);
@@ -49,6 +56,12 @@ const handlePromptTypes = async (ws: WebSocket, { prompt, data }: { prompt: Prom
 }
 
 
+/**
+ * Flow control for the message
+ * @param {WebSocket} ws
+ * @param {InputData} validatedData
+ * @returns {any}
+ */
 const completionStreamController = async (ws: WebSocket, validatedData: InputData): Promise<void> => {
     try {
         const { type, data } = validatedData;
