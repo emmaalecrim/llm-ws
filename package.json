@@ -15,8 +15,8 @@
     "docker:run": "docker run -p 8080:8080 llm-ws",
     "deploy:build": "gcloud config set project truenation-dev && gcloud builds submit --region=global --config cloudbuild.yaml",
     "deploy:build:prod": "gcloud builds submit --region=global --config prod-cloudbuild.yaml",
-    "deploy": "gcloud config set project truenation-dev && gcloud builds submit --region=global --config cloudbuild.yaml && gcloud run deploy llm-ws --image europe-west2-docker.pkg.dev/truenation-dev/llm-ws/main",
-    "deploy:prod": "gcloud builds submit --region=global --config prod-cloudbuild.yaml && gcloud run deploy llm-ws --image europe-docker.pkg.dev/truefilter-10000/llm-ws/main",
+    "deploy": "gcloud config set project truenation-dev && gcloud builds submit --region=global --config cloudbuild.yaml && gcloud run deploy glasswall-ws --image europe-west2-docker.pkg.dev/truenation-dev/glasswall-ws/main",
+    "deploy:prod": "gcloud builds submit --region=global --config prod-cloudbuild.yaml && gcloud run deploy glasswall-ws --image europe-docker.pkg.dev/truefilter-10000/glasswall-ws/main",
     "auth:refresh": "gcloud auth login && firebase login --reauth"
   },
   "dependencies": {
