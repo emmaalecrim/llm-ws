@@ -37,7 +37,7 @@ const completionStreamController = async (ws: WebSocket, parsedData: any): Promi
 
         const events: AsyncIterable<ChatCompletions> = sendMessages(messages, config);
         for await (const event of events) {
-            ws.send(Buffer.from("data :" + JSON.stringify(event), "utf-8"));
+            ws.send(Buffer.from("data: " + JSON.stringify(event), "utf-8"));
             if (debug) {
                 for (const choice of event.choices) {
                     const delta = choice.delta?.content;
