@@ -6,6 +6,8 @@ import { ChatCompletions } from "@azure/openai";
 // Load the .env file if it exists
 import * as dotenv from "dotenv";
 dotenv.config();
+
+
 const debug = process.env.DEBUG === "true";
 
 /**

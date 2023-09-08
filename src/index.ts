@@ -1,10 +1,11 @@
 import { WebSocketServer, RawData } from 'ws';
 import completionStreamController from './controllers/completionStreamController';
 import { getIdFromToken } from './utils/firebase';
+// Load the .env file if it exists
+import * as dotenv from "dotenv";
+dotenv.config();
 
-
-
-console.debug("Server started at port 8080")
+const debug = process.env.DEBUG === "true";
 
 const wss = new WebSocketServer({
   port: 8080,
@@ -20,7 +21,7 @@ wss.on('connection', function connection(ws) {
       if (Buffer.isBuffer(data)) {
         if (data.toString() === "ping") return ws.send("pong")
         const parsedData = JSON.parse(data.toString())
-        console.debug('payload recieved:', parsedData)
+        if (debug) console.debug('payload recieved:', parsedData)
         try {
           const id = await getIdFromToken(parsedData?.auth)
           if (!id) ws.send(Buffer.from(JSON.stringify({ error: "invalid auth token" })))
