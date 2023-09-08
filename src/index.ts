@@ -36,7 +36,7 @@ wss.on('connection', function connection(ws) {
       }
     }
     catch (e: any) {
-      console.log('error in controller', e)
+      console.error('error in controller', e)
       ws.send(Buffer.from(JSON.stringify({ error: e.message })))
       return ws.close()
     }
