@@ -36,7 +36,6 @@ const completionStreamController = async (ws: WebSocket, parsedData: any): Promi
         const { messages, config } = getMessages(prompt, data);
 
         const events: AsyncIterable<ChatCompletions> = sendMessages(messages, config);
-        console.info('Chat completion started')
         for await (const event of events) {
             ws.send(Buffer.from(JSON.stringify(event), "utf-8"));
             if (debug) {
@@ -48,7 +47,6 @@ const completionStreamController = async (ws: WebSocket, parsedData: any): Promi
                 }
             }
         }
-        console.info('Chat completion finished');
     } catch (e: any) {
         console.error(e);
         ws.send(Buffer.from(JSON.stringify({ error: e.message }), "utf-8"));
