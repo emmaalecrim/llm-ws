@@ -38,7 +38,7 @@ const completionStreamController = async (ws: WebSocket, parsedData: any): Promi
         const events: AsyncIterable<ChatCompletions> = sendMessages(messages, config);
         for await (const event of events) {
             // Finish Reason is being remapped manually to make it backwards compatible
-            ws.send(Buffer.from("data: " + JSON.stringify({ ...event, choices: [{ ...event.choices[0], finish_reason: event.choices[0].finishReason }] }), "utf-8"));
+            ws.send(Buffer.from(JSON.stringify(event), "utf-8"));
             if (debug) {
                 for (const choice of event.choices) {
                     const delta = choice.delta?.content;
