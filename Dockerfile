@@ -1,3 +1,4 @@
+# This is not working because you need to expose DAC and API keys.
 FROM node:14-alpine3.10 as ts-compiler
 WORKDIR /usr/app
 COPY package*.json ./
