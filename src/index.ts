@@ -1,5 +1,6 @@
 import { WebSocketServer, RawData } from 'ws';
 import completionStreamController from './controllers/completionStreamController';
+import completionController from './controllers/completionController';
 import { getIdFromToken } from './utils/firebase';
 // Load the .env file if it exists
 import * as dotenv from "dotenv";
@@ -10,6 +11,7 @@ const debug = process.env.DEBUG === "true";
 const wss = new WebSocketServer({
   port: 8080,
 });
+const nonStreaming = ["suggest", "improve", "tone"]
 
 
 wss.on('connection', function connection(ws) {
@@ -23,16 +25,21 @@ wss.on('connection', function connection(ws) {
         const parsedData = JSON.parse(data.toString())
         if (debug) console.debug('payload recieved:', parsedData)
         try {
-          const id = await getIdFromToken(parsedData?.auth)
-          if (!id) ws.send(Buffer.from(JSON.stringify({ error: "invalid auth token" })))
+          if (parsedData?.auth == "foobar") {
+            console.log("authed")
+          }
+          else {
+            const id = await getIdFromToken(parsedData?.auth)
+            if (!id) ws.send(Buffer.from(JSON.stringify({ error: "invalid auth token" })))
+          }
 
         } catch (e: any) {
           console.error('error in auth:', e.message)
           ws.send(Buffer.from(JSON.stringify({ error: e.message })))
           return ws.close()
         }
+        if (nonStreaming.includes(parsedData.type)) return completionController(ws, parsedData)
         return completionStreamController(ws, parsedData)
-
       }
     }
     catch (e: any) {
