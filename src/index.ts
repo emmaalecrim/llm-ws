@@ -57,8 +57,8 @@ wss.on('connection', function connection(ws: WebSocket) {
           ws.send(Buffer.from(JSON.stringify({ error: `Error in getIdFromToken: ${e.message}` })))
           return ws.close()
         }
-        if (noStream.includes(parsedData.type)) return completionController(ws, parsedData)
-        return completionStreamController(ws, parsedData)
+        if (noStream.includes(validatedInput.type)) return completionController(ws, validatedInput)
+        return completionStreamController(ws, validatedInput)
       }
     } catch (e: any) {
       logger(`Error in controller: ${e.message}`, "error")
