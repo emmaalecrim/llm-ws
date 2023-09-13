@@ -13,11 +13,11 @@ const debug = process.env.DEBUG === "true";
 /**
  * Handles streaming chat completions from OpenAI's chat completion API.
  * @param ws - The WebSocket connection.
- * @param parsedData - The parsed data received from the client.
+ * @param payload - The parsed data received from the client.
  */
-const completionStreamController = async (ws: WebSocket, parsedData: any): Promise<void> => {
+const completionStreamController = async (ws: WebSocket, payload: any): Promise<void> => {
     try {
-        const { data, type } = parsedData;
+        const { data, type } = payload;
         let prompt: promptTypes = "tone";
 
         switch (type) {

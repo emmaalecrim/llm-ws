@@ -15,18 +15,18 @@ wss.on('connection', function connection(ws) {
   // @ts-expect-error - typing bs
   ws.isAlive = true;
 
-  ws.on('message', async (data: RawData) => {
+  ws.on('message', async (rawData: RawData) => {
     try {
-      if (Buffer.isBuffer(data)) {
-        if (data.toString() === "ping") return ws.send("pong")
-        const parsedData = JSON.parse(data.toString())
-        logger({ parsedData })
+      if (Buffer.isBuffer(rawData)) {
+        if (rawData.toString() === "ping") return ws.send("pong")
+        const payload = JSON.parse(rawData.toString())
+        logger({ parsedData: payload })
         try {
-          if (parsedData?.auth == "foobar") {
+          if (payload?.auth == "foobar") {
             logger('auth bypassed', "error")
           }
           else {
-            const id = await getIdFromToken(parsedData?.auth)
+            const id = await getIdFromToken(payload?.auth)
             if (!id) ws.send(Buffer.from(JSON.stringify({ error: "invalid auth token" })))
           }
 
@@ -35,8 +35,8 @@ wss.on('connection', function connection(ws) {
           ws.send(Buffer.from(JSON.stringify({ error: e.message })))
           return ws.close()
         }
-        if (noStream.includes(parsedData.type)) return completionController(ws, parsedData)
-        return completionStreamController(ws, parsedData)
+        if (noStream.includes(payload.type)) return completionController(ws, payload)
+        return completionStreamController(ws, payload)
       }
     }
     catch (e: any) {
