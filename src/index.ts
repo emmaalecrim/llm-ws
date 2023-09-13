@@ -4,6 +4,11 @@ import completionController from './controllers/completionController';
 import { getIdFromToken } from './utils/firebase';
 import logger from './utils/logging';
 import { noStream } from './utils/constants';
+// Load the .env file if it exists
+import * as dotenv from "dotenv";
+dotenv.config();
+
+const debug = process.env.DEBUG === "true";
 
 
 const wss = new WebSocketServer({
@@ -35,7 +40,8 @@ wss.on('connection', function connection(ws) {
           ws.send(Buffer.from(JSON.stringify({ error: e.message })))
           return ws.close()
         }
-        if (noStream.includes(payload.type)) return completionController(ws, payload)
+        // TODO: switch this based on debug or payload.mode("streaming" | undefined)
+        if (debug || noStream.includes(payload.type)) return completionController(ws, payload)
         return completionStreamController(ws, payload)
       }
     }
