@@ -6,21 +6,21 @@ import { config } from 'dotenv';
 import express from 'express';
 import http from 'http';
 import { InputData, validateInput } from './utils/schemas/completion';
+import logger from './utils/logging';
+import { noStream } from './utils/constants';
 
 
 config();
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 80;
 const app = express();
-const debug = process.env.DEBUG === "true";
+
+
 
 app.get('/health', (req, res) => {
   res.status(200).send('OK');
 });
-const nonStreaming = ["suggest", "improve", "tone"]
 
 const server = http.createServer(app);
-
-console.info(`Server started at port ${PORT}`)
 
 const wss = new WebSocketServer({ server });
 
@@ -42,7 +42,7 @@ wss.on('connection', function connection(ws: WebSocket) {
         // DONT DO THIS; MALFORMED JSON WILL ALWAYS THROW. HANDLE IT GRACEFULLY
         const parsedData = JSON.parse(rawData.toString())
         const { success, data } = validateInput(parsedData)
-        console.debug('Parsed data:', data)
+        logger({ parsedData: data })
         if (!success) return ws.send(Buffer.from(JSON.stringify({ error: "invalid input" })))
         const validatedInput = data as InputData
         try {
@@ -53,22 +53,22 @@ wss.on('connection', function connection(ws: WebSocket) {
             if (!id) ws.send(Buffer.from(JSON.stringify({ error: "invalid auth token" })))
           }
         } catch (e: any) {
-          console.error('Error in getIdFromToken:', e)
+          logger(`Error in getIdFromToken: ${e.message}`, "error")
           ws.send(Buffer.from(JSON.stringify({ error: `Error in getIdFromToken: ${e.message}` })))
           return ws.close()
         }
-        if (nonStreaming.includes(parsedData.type)) return completionController(ws, parsedData)
+        if (noStream.includes(parsedData.type)) return completionController(ws, parsedData)
         return completionStreamController(ws, parsedData)
       }
     } catch (e: any) {
-      console.error('Error in controller:', e)
+      logger(`Error in controller: ${e.message}`, "error")
       ws.send(Buffer.from(JSON.stringify({ error: `Error in controller: ${e.message}` })))
       return ws.close()
     }
   });
 
   ws.on('error', e => {
-    console.error('Websocket error:', e)
+    logger(`Websocket error: ${e.message}`, "error")
     ws.send(Buffer.from(JSON.stringify({ error: `Websocket error: ${e.message}` })))
     return ws.close()
   });
@@ -84,13 +84,13 @@ setInterval(() => {
 }, 30000); // 30 second interval
 
 process.on('SIGINT', () => {
-  console.info('Gracefully shutting down');
+  logger('SIGINT signal received. Shutting down gracefully');
   server.close();
 });
 
 process.on('SIGTERM', () => {
-  console.info('Gracefully shutting down');
+  logger('SIGTERM signal received. Shutting down gracefully');
   server.close();
 });
 
-server.listen(PORT);
+server.listen(PORT, () => logger(`Listening on port ${PORT}`));
