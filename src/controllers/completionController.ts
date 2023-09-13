@@ -38,7 +38,7 @@ const completionController = async (ws: WebSocket, parsedData: any): Promise<voi
         return ws.send(Buffer.from(JSON.stringify(parsedCompletions), "utf-8"));
 
     } catch (e: any) {
-        logger(e, "error");
+        logger("Error in completionController: " + e, "error");
         ws.send(Buffer.from(JSON.stringify({ error: e.message }), "utf-8"));
     }
 };

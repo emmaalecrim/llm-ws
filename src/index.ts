@@ -2,16 +2,13 @@ import { WebSocketServer, RawData } from 'ws';
 import completionStreamController from './controllers/completionStreamController';
 import completionController from './controllers/completionController';
 import { getIdFromToken } from './utils/firebase';
-// Load the .env file if it exists
-import * as dotenv from "dotenv";
-dotenv.config();
+import logger from './utils/logging';
+import { noStream } from './utils/constants';
 
-const debug = process.env.DEBUG === "true";
 
 const wss = new WebSocketServer({
   port: 8080,
 });
-const nonStreaming = ["suggest", "improve", "tone"]
 
 
 wss.on('connection', function connection(ws) {
@@ -23,10 +20,10 @@ wss.on('connection', function connection(ws) {
       if (Buffer.isBuffer(data)) {
         if (data.toString() === "ping") return ws.send("pong")
         const parsedData = JSON.parse(data.toString())
-        if (debug) console.debug('payload recieved:', parsedData)
+        logger({ parsedData })
         try {
           if (parsedData?.auth == "foobar") {
-            console.log("authed")
+            logger('auth bypassed', "error")
           }
           else {
             const id = await getIdFromToken(parsedData?.auth)
@@ -34,23 +31,23 @@ wss.on('connection', function connection(ws) {
           }
 
         } catch (e: any) {
-          console.error('error in auth:', e.message)
+          logger('error in auth: ' + e.message, "error")
           ws.send(Buffer.from(JSON.stringify({ error: e.message })))
           return ws.close()
         }
-        if (nonStreaming.includes(parsedData.type)) return completionController(ws, parsedData)
+        if (noStream.includes(parsedData.type)) return completionController(ws, parsedData)
         return completionStreamController(ws, parsedData)
       }
     }
     catch (e: any) {
-      console.error('error in controller', e)
+      logger('error in controller' + e, "error")
       ws.send(Buffer.from(JSON.stringify({ error: e.message })))
       return ws.close()
     }
   });
 
   ws.on('error', e => {
-    console.error(e)
+    logger('error in ws: ' + e, "error")
     ws.send(Buffer.from(JSON.stringify({ error: e.message })))
     return ws.close()
   });
