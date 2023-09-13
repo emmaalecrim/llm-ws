@@ -1,1 +1,1 @@
-export const noStream = ["suggest", "improve", "tone"]
+export const noStream = ["suggest", "improve", "tone", "short"]
