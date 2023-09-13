@@ -8,6 +8,11 @@ import http from 'http';
 import { InputData, validateInput } from './utils/schemas/completion';
 import logger from './utils/logging';
 import { noStream } from './utils/constants';
+// Load the .env file if it exists
+import * as dotenv from "dotenv";
+dotenv.config();
+
+const debug = process.env.DEBUG === "true";
 
 
 config();
