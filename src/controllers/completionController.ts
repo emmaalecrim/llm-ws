@@ -34,6 +34,7 @@ const completionController = async (ws: WebSocket, parsedData: any): Promise<voi
         }
 
         const { messages, config } = getMessages(prompt, data);
+        if (debug) console.debug(messages, config)
         const completions = await sendMessages(messages, config);
         const parsedCompletions = await csvToJson(completions?.choices[0]?.message?.content || "", ["emoji", "title", "text"])
 
