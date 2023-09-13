@@ -2,7 +2,6 @@ import { WebSocket } from "ws";
 import { sendMessages } from "../utils/openai";
 import getMessages from "../utils/prompts/helpers";
 import { promptTypes } from "../utils/prompts/prompt-base";
-import { ChatCompletions } from "@azure/openai";
 // Load the .env file if it exists
 import * as dotenv from "dotenv";
 dotenv.config();

@@ -1,13 +1,12 @@
 import { WebSocket } from "ws";
-import { sendMessagesAndGetList } from "../utils/openai";
+import { streamMessages } from "../utils/openai";
 import getMessages from "../utils/prompts/helpers";
-import { ChatCompletions } from "@azure/openai";
-import { config } from "dotenv";
-import { InputData, MessageParams, PromptTypes } from "../utils/schemas/completion";
+import { promptTypes } from "../utils/prompts/prompt-base";
+import { MessageParams, PromptTypes, InputData } from "../utils/schemas/completion";
 import { summerizeToFitContextBudget } from "../utils/summarize/summarize";
+import { config } from "dotenv";
 
 
-// Setting up the .env configs
 config();
 const ENCODING = "utf-8";
 const debug = process.env.DEBUG === "true";
@@ -36,7 +35,7 @@ const handleSummarize = async (ws: WebSocket, data: any): Promise<void> => {
 const handlePromptTypes = async (ws: WebSocket, { prompt, data }: { prompt: PromptTypes, data: MessageParams }): Promise<void> => {
     // Getting message and configuration
     const { messages, config } = getMessages(prompt, data);
-    const events: AsyncIterable<ChatCompletions> = sendMessagesAndGetList(messages, config);
+    const events = streamMessages(messages, config);
 
     for await (const event of events) {
         ws.send(Buffer.from(JSON.stringify(event), ENCODING));
@@ -70,7 +69,7 @@ const completionStreamController = async (ws: WebSocket, validatedData: InputDat
         } else if (promptTypes.includes(type)) {
             return await handlePromptTypes(ws, { prompt: type, data });
         }
-    }catch (e: any) {
+    } catch (e: any) {
         console.error(e);
         ws.send(Buffer.from(JSON.stringify({ error: e.message }), ENCODING));
     }
@@ -96,7 +95,7 @@ const oldCompletionStreamController = async (ws: WebSocket, parsedData: any): Pr
 
         const { messages, config } = getMessages(prompt, data);
 
-        const events: AsyncIterable<ChatCompletions> = sendMessages(messages, config);
+        const events = streamMessages(messages, config);
         for await (const event of events) {
             // Finish Reason is being remapped manually to make it backwards compatible
             ws.send(Buffer.from(JSON.stringify(event), "utf-8"));
