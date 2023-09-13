@@ -17,6 +17,7 @@ const completionController = async (ws: WebSocket, payload: any): Promise<void> 
         const { data, type } = payload;
         let prompt: promptTypes = "tone";
 
+        // TODO: remove this logic. Have to start syncing with client.
         switch (type) {
             case "improve":
                 if (data?.tone === "short") {
