@@ -1,8 +1,8 @@
 import { WebSocket } from "ws";
-import { sendMessages } from "../utils/openai";
+import { streamMessages } from "../utils/openai";
 import getMessages from "../utils/prompts/helpers";
 import { promptTypes } from "../utils/prompts/prompt-base";
-import { ChatCompletions } from "@azure/openai";
+
 // Load the .env file if it exists
 import * as dotenv from "dotenv";
 dotenv.config();
@@ -35,7 +35,7 @@ const completionStreamController = async (ws: WebSocket, parsedData: any): Promi
 
         const { messages, config } = getMessages(prompt, data);
 
-        const events: AsyncIterable<ChatCompletions> = sendMessages(messages, config);
+        const events = streamMessages(messages, config);
         for await (const event of events) {
             // Finish Reason is being remapped manually to make it backwards compatible
             ws.send(Buffer.from(JSON.stringify(event), "utf-8"));
