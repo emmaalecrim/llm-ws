@@ -8,13 +8,20 @@ const client = new OpenAIClient(new OpenAIKeyCredential(process.env.OPENAI_KEY |
 
 const sendMessages = (
   messages: any[],
-  config: GetChatCompletionsOptions = {},
+  config: GetChatCompletionsOptions = { stream: true },
   model: string = "gpt-3.5-turbo"
-) =>
-  client.listChatCompletions(
-    model,
-    messages,
-    config
-  )
+) => config?.stream ? client.listChatCompletions(
+  model,
+  messages,
+  config
+) : client.getChatCompletions(
+  model,
+  messages,
+  config
+);
+
+
+
+
 
 export { sendMessages };
