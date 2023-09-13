@@ -21,8 +21,10 @@
   },
   "dependencies": {
     "@azure/openai": "^1.0.0-beta.5",
+    "csvtojson": "^2.0.10",
     "dotenv": "^16.3.1",
     "firebase-admin": "^11.9.0",
+    "normalize-text": "^2.4.1",
     "ws": "^8.13.0"
   },
   "devDependencies": {
