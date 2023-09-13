@@ -4,6 +4,7 @@ import getMessages from "../utils/prompts/helpers";
 import { promptTypes } from "../utils/prompts/prompt-base";
 // Load the .env file if it exists
 import * as dotenv from "dotenv";
+import { csvToJson } from "../utils/parsing";
 dotenv.config();
 
 
@@ -34,8 +35,10 @@ const completionController = async (ws: WebSocket, parsedData: any): Promise<voi
 
         const { messages, config } = getMessages(prompt, data);
         const completions = await sendMessages(messages, config);
-        if (debug) console.log(completions);
-        return ws.send(Buffer.from(JSON.stringify(completions), "utf-8"));
+        const parsedCompletions = await csvToJson(completions?.choices[0]?.message?.content || "", ["emoji", "title", "text"])
+
+        if (debug) console.log(completions, parsedCompletions);
+        return ws.send(Buffer.from(JSON.stringify(parsedCompletions), "utf-8"));
 
     } catch (e: any) {
         console.error(e);

@@ -1,5 +1,6 @@
 import { RawData, WebSocket, Server as WebSocketServer } from 'ws';
 import completionStreamController from './controllers/completionStreamController';
+import completionController from './controllers/completionController';
 import { getIdFromToken } from './utils/firebase';
 import { config } from 'dotenv';
 import express from 'express';
@@ -15,6 +16,7 @@ const debug = process.env.DEBUG === "true";
 app.get('/health', (req, res) => {
   res.status(200).send('OK');
 });
+const nonStreaming = ["suggest", "improve", "tone"]
 
 const server = http.createServer(app);
 
@@ -55,7 +57,8 @@ wss.on('connection', function connection(ws: WebSocket) {
           ws.send(Buffer.from(JSON.stringify({ error: `Error in getIdFromToken: ${e.message}` })))
           return ws.close()
         }
-        return completionStreamController(ws, validatedInput)
+        if (nonStreaming.includes(parsedData.type)) return completionController(ws, parsedData)
+        return completionStreamController(ws, parsedData)
       }
     } catch (e: any) {
       console.error('Error in controller:', e)
