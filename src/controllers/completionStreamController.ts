@@ -97,7 +97,7 @@ const oldCompletionStreamController = async (ws: WebSocket, parsedData: any): Pr
 
         const events = streamMessages(messages, config);
         for await (const event of events) {
-            // Finish Reason is being remapped manually to make it backwards compatible
+            // TODO: add a timeout to the stream, sigterm if it takes too long with not new event
             ws.send(Buffer.from(JSON.stringify(event), "utf-8"));
             if (debug) {
                 for (const choice of event.choices) {
