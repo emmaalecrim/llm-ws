@@ -2,13 +2,10 @@ import { WebSocket } from "ws";
 import { sendMessages } from "../utils/openai";
 import getMessages from "../utils/prompts/helpers";
 import { promptTypes } from "../utils/prompts/prompt-base";
-// Load the .env file if it exists
-import * as dotenv from "dotenv";
 import { csvToJson } from "../utils/parsing";
-dotenv.config();
+import logger from "../utils/logging";
 
 
-const debug = process.env.DEBUG === "true";
 
 /**
  * Handles chat completions from OpenAI's chat completion API.
@@ -34,15 +31,14 @@ const completionController = async (ws: WebSocket, parsedData: any): Promise<voi
         }
 
         const { messages, config } = getMessages(prompt, data);
-        if (debug) console.debug(messages, config)
+        logger({ messages, config })
         const completions = await sendMessages(messages, config);
         const parsedCompletions = await csvToJson(completions?.choices[0]?.message?.content || "", ["emoji", "title", "text"])
-
-        if (debug) console.log(completions, parsedCompletions);
+        logger({ completions, parsedCompletions })
         return ws.send(Buffer.from(JSON.stringify(parsedCompletions), "utf-8"));
 
     } catch (e: any) {
-        console.error(e);
+        logger(e, "error");
         ws.send(Buffer.from(JSON.stringify({ error: e.message }), "utf-8"));
     }
 };
