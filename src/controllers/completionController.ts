@@ -10,11 +10,11 @@ import { promptTypes } from "../utils/prompts/prompt-base";
 /**
  * Handles chat completions from OpenAI's chat completion API.
  * @param ws - The WebSocket connection.
- * @param payload - The parsed data received from the client.
+ * @param data - The parsed data received from the client.
  */
-const completionController = async (ws: WebSocket, payload: any): Promise<void> => {
+const completionController = async (ws: WebSocket, data: any): Promise<void> => {
     try {
-        const { data, type } = payload;
+        const { type } = data;
         let prompt: promptTypes = "tone";
 
         // TODO: remove this logic. Have to start syncing with client.

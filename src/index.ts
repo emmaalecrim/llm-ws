@@ -7,12 +7,6 @@ import express from 'express';
 import http from 'http';
 import { InputData, validateInput } from './utils/schemas/completion';
 import logger from './utils/logging';
-import { noStream } from './utils/constants';
-// Load the .env file if it exists
-import * as dotenv from "dotenv";
-dotenv.config();
-
-const debug = process.env.DEBUG === "true";
 
 
 config();
@@ -62,8 +56,12 @@ wss.on('connection', function connection(ws: WebSocket) {
           ws.send(Buffer.from(JSON.stringify({ error: `Error in getIdFromToken: ${e.message}` })))
           return ws.close()
         }
-        if (noStream.includes(validatedInput.type)) return completionController(ws, validatedInput)
-        return completionStreamController(ws, validatedInput)
+        switch (validatedInput?.mode) {
+          case "stream":
+            return completionStreamController(ws, validatedInput.data)
+          default:
+            return completionController(ws, validatedInput.data)
+        }
       }
     } catch (e: any) {
       logger(`Error in controller: ${e.message}`, "error")

@@ -77,7 +77,7 @@ const completionStreamController = async (ws: WebSocket, validatedData: InputDat
 
 const oldCompletionStreamController = async (ws: WebSocket, parsedData: any): Promise<void> => {
     try {
-        const { data, type } = payload;
+        const { type } = data;
         let prompt: promptTypes = "tone";
 
         switch (type) {
