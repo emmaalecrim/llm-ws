@@ -10,12 +10,10 @@ const debug = process.env.DEBUG === "true";
 
 
 /**
- * Former processing when 'type' equals 'PromptTypes'
+ * Processing when 'type' is included in 'PromptTypes'
  * @param {WebSocket} ws
- * @param {any} {prompt
- * @param {any} data}:{prompt:PromptTypes
- * @param {MessageParams}} data
- * @returns {any}
+ * @param {{PromptTypes, MessageParams}} { prompt, data }
+ * @returns {void}
  */
 const handlePromptTypes = async (ws: WebSocket, { prompt, data }: { prompt: PromptTypes, data: MessageParams }): Promise<void> => {
     // Getting message and configuration
@@ -47,7 +45,7 @@ const handlePromptTypes = async (ws: WebSocket, { prompt, data }: { prompt: Prom
  * Flow control for the message
  * @param {WebSocket} ws
  * @param {InputData} validatedData
- * @returns {any}
+ * @returns {void}
  */
 const completionStreamController = async (ws: WebSocket, validatedData: InputData): Promise<void> => {
     try {
