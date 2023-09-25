@@ -22,7 +22,7 @@ const completionStreamController = async (ws: WebSocket, parsedData: any): Promi
 
         switch (type) {
             case "improve":
-                if (data?.tone === "short") {
+                if (data?.tone === "Shorter") {
                     prompt = "short";
                 } else {
                     prompt = "tone";
