@@ -6,11 +6,11 @@ import express from 'express';
 import http from 'http';
 import { InputData, validateInput } from './utils/schemas/completion';
 
+
 config();
 const PORT = process.env.PORT || 8080;
-
-
 const app = express();
+const debug = process.env.DEBUG === "true";
 
 app.get('/health', (req, res) => {
   res.status(200).send('OK');
@@ -37,6 +37,7 @@ wss.on('connection', function connection(ws: WebSocket) {
           ws.ping('', false); // WebSocket Ping/Pong
           return ws.send("pong");
         }
+        // DONT DO THIS; MALFORMED JSON WILL ALWAYS THROW. HANDLE IT GRACEFULLY
         const parsedData = JSON.parse(rawData.toString())
         const { success, data } = validateInput(parsedData)
         console.debug('Parsed data:', data)

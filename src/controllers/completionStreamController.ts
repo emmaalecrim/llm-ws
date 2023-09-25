@@ -6,11 +6,11 @@ import { config } from "dotenv";
 import { InputData, MessageParams, PromptTypes } from "../utils/schemas/completion";
 import { summerizeToFitContextBudget } from "../utils/summarize/summarize";
 
+
 // Setting up the .env configs
 config();
 const ENCODING = "utf-8";
 const debug = process.env.DEBUG === "true";
-
 const promptTypes = ['reply', 'improve', 'compose', 'customize']
 
 
@@ -69,6 +69,45 @@ const completionStreamController = async (ws: WebSocket, validatedData: InputDat
             return await handleSummarize(ws, data);
         } else if (promptTypes.includes(type)) {
             return await handlePromptTypes(ws, { prompt: type, data });
+        }
+    }catch (e: any) {
+        console.error(e);
+        ws.send(Buffer.from(JSON.stringify({ error: e.message }), ENCODING));
+    }
+}
+
+const oldCompletionStreamController = async (ws: WebSocket, parsedData: any): Promise<void> => {
+    try {
+        const { data, type } = parsedData;
+        let prompt: promptTypes = "tone";
+
+        switch (type) {
+            case "improve":
+                if (data?.tone === "Shorter") {
+                    prompt = "short";
+                } else {
+                    prompt = "tone";
+                }
+                break;
+            default:
+                prompt = type;
+                break;
+        }
+
+        const { messages, config } = getMessages(prompt, data);
+
+        const events: AsyncIterable<ChatCompletions> = sendMessages(messages, config);
+        for await (const event of events) {
+            // Finish Reason is being remapped manually to make it backwards compatible
+            ws.send(Buffer.from(JSON.stringify(event), "utf-8"));
+            if (debug) {
+                for (const choice of event.choices) {
+                    const delta = choice.delta?.content;
+                    if (delta !== undefined) {
+                        console.log(`Chatbot: ${delta}`);
+                    }
+                }
+            }
         }
     } catch (e: any) {
         console.error(e);
