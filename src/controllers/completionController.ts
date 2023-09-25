@@ -3,49 +3,34 @@ import { sendMessages } from "../utils/openai";
 import getMessages from "../utils/prompts/helpers";
 import { csvToJson } from "../utils/parsing";
 import logger from "../utils/logging";
-import { promptTypes } from "../utils/prompts/prompt-base";
+import { InputData } from "../utils/schemas/completion";
 
 
+const ENCODING = "utf-8";
 
 /**
  * Handles chat completions from OpenAI's chat completion API.
  * @param ws - The WebSocket connection.
- * @param data - The parsed data received from the client.
+ * @param payload - The parsed data received from the client.
  */
-const completionController = async (ws: WebSocket, data: any): Promise<void> => {
+const completionController = async (ws: WebSocket, payload: InputData): Promise<void> => {
     try {
-        const { type } = data;
-        let prompt: promptTypes = "tone";
-
-        // TODO: remove this logic. Have to start syncing with client.
-        switch (type) {
-            case "improve":
-                if (data?.tone === "short") {
-                    prompt = "short";
-                } else {
-                    prompt = "tone";
-                }
-                break;
-            default:
-                prompt = type;
-                break;
-        }
-
-        const { messages, config } = getMessages(prompt, data);
+        const { data, type } = payload;
+        const { messages, config } = getMessages(type, data);
         logger({ messages, config })
         const completions = await sendMessages(messages, config);
         // TODO: refactor into functional parsing
         if (type === "suggest") {
             const parsedCompletions = await csvToJson(completions?.choices[0]?.message?.content || "", ["emoji", "title", "text"])
             logger({ parsedCompletions })
-            return ws.send(Buffer.from(JSON.stringify(parsedCompletions), "utf-8"));
+            return ws.send(Buffer.from(JSON.stringify(parsedCompletions), ENCODING));
         }
         logger({ completions })
-        return ws.send(Buffer.from(JSON.stringify(completions), "utf-8"));
+        return ws.send(Buffer.from(JSON.stringify(completions), ENCODING));
 
     } catch (e: any) {
         logger("Error in completionController: " + e, "error");
-        ws.send(Buffer.from(JSON.stringify({ error: e.message }), "utf-8"));
+        ws.send(Buffer.from(JSON.stringify({ error: e.message }), ENCODING));
     }
 };
 

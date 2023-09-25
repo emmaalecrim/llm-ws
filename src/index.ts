@@ -56,11 +56,11 @@ wss.on('connection', function connection(ws: WebSocket) {
           ws.send(Buffer.from(JSON.stringify({ error: `Error in getIdFromToken: ${e.message}` })))
           return ws.close()
         }
-        switch (validatedInput?.mode) {
+        switch (validatedInput.mode) {
           case "stream":
-            return completionStreamController(ws, validatedInput.data)
+            return completionStreamController(ws, validatedInput)
           default:
-            return completionController(ws, validatedInput.data)
+            return completionController(ws, validatedInput)
         }
       }
     } catch (e: any) {

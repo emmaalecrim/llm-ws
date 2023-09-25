@@ -1,8 +1,9 @@
-import prompts, { messengerArgs, promptTypes } from "./prompt-base/index";
+import { PromptTypes, MessageParams } from "../schemas/completion";
+import prompts from "./prompt-base/index";
 
 const getMessages = (
-    type: promptTypes,
-    args: messengerArgs,
+    type: PromptTypes,
+    args: MessageParams,
     version?: string
 ): { messages: object[]; config?: object; metadata: object } =>
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
