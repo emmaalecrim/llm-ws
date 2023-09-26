@@ -18,4 +18,4 @@ console.info("Auth initialized");
 
 const getIdFromToken = async (token: string) => auth?.verifyIdToken(token)
 
-export { app, firestore, getIdFromToken };
+export { app, firestore, getIdFromToken, auth };
