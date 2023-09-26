@@ -49,7 +49,7 @@ app.post('/exchange', async (req, res) => {
   }
 });
 
-// get user data from the JWT
+// get user data for the JWT
 app.get('/user', async (req, res) => {
   try {
     const token: string = req?.header('Authorization')?.split(' ')[1] || "";

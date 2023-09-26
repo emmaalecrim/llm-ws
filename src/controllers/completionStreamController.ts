@@ -50,6 +50,7 @@ const handlePromptTypes = async (ws: WebSocket, { prompt, data }: { prompt: Prom
 const completionStreamController = async (ws: WebSocket, validatedData: InputData): Promise<void> => {
     try {
         const { type, data } = validatedData;
+        if (type === "summarize") throw new Error("summarize is not supported")
         return await handlePromptTypes(ws, { prompt: type, data });
     } catch (e: any) {
         console.error(e);
