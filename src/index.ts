@@ -12,18 +12,18 @@ import { auth, firestore as db } from './utils/firebase';
 
 
 config();
+
 const PORT = process.env.PORT || 80;
 const JWT_SECRET = process.env.JWT_SECRET || 'secret';
 const JWT_EXPIRATION = '2weeks';
+
 const app = express();
 const server = http.createServer(app);
-
+app.use(express.json());
 
 app.get('/health', (req, res) => {
-  res.status(200).send('OK');
+  return res.status(200).send('OK');
 });
-
-app.use(express.json());
 
 // Exchanges FB session token for longer lived JWT session token(not using JWT to avoid the potential leak)- you can very easily refactor this to be a user session later on
 app.post('/exchange', async (req, res) => {
@@ -64,10 +64,10 @@ app.get('/user', async (req, res) => {
     const uid: string = claims?.uid;
     const [user, data] = await Promise.all([
       auth.getUser(uid).catch((e) => logger(`Error in auth.getUser: ${e.message}`, "error")),
-      db.collection('users').doc(uid).get().catch((e) => logger(`Error in db.collection('users').doc(${uid}).get(): ${e.message}`, "error"))
+      db.collection('users').doc(uid).get().then((snap) => snap.data).catch((e) => logger(`Error in db.collection('users').doc(${uid}).get(): ${e.message}`, "error"))
     ])
     // TODO: cherry pick data to send back to prevent leaking sensitive data
-    return res.json({ user, data });
+    return res.json({ user, userData: data });
   } catch (e: any) {
     logger(`Error in /exchange: ${e.message}`, "error")
     return res.status(500).json({ error: e.message });
@@ -86,25 +86,21 @@ server.on('upgrade', async function upgrade(request, socket, head) {
   }
 
   try {
-    if (token === process.env.AUTH_BYPASS_TOKEN) {
-      logger("AUTH BYPASS ENABLED - IF YOURE SEEING THIS IN PRODUCTION, SOMETHING IS WRONG", "error")
-    } else {
 
-      const claims = jwt.verify(token, JWT_SECRET);
-      // @ts-ignore - uid is not a property of decoded
-      const uid: string = claims?.uid;
-      if (!uid) {
-        socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
-        return socket.destroy();
-      }
-      socket.removeListener('error', handleWebsocketError);
-
-      return wss.handleUpgrade(request, socket, head, function done(ws) {
-        wss.emit('connection', ws, request);
-      });
+    const claims = jwt.verify(token, JWT_SECRET);
+    // @ts-ignore - uid is not a property of decoded
+    const uid: string = claims?.uid;
+    if (!uid) {
+      socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+      return socket.destroy();
     }
+
+    socket.removeListener('error', handleWebsocketError);
+    return wss.handleUpgrade(request, socket, head, function done(ws) {
+      wss.emit('connection', ws, request);
+    });
   } catch (e: any) {
-    logger(`Error in getIdFromToken: ${e.message}`, "error")
+    logger(`Error in https to wss upgrade: ${e.message}`, "error")
     socket.write(Buffer.from(JSON.stringify({ error: `Error in https to wss upgrade: ${e.message}` })))
     return socket.destroy()
   }
