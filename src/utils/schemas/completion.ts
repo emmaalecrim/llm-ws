@@ -33,8 +33,8 @@ export type SummarizeParams = z.infer<typeof summarizeParams>;
 
 // These types are duplicated in prompt-base/collections/shared and will be kept for compatibility
 //  until I have time to refactor
-export const MessageParams = SysMessageParams.and(UserMessageParams)//.or(summarizeParams);
-export type MessageParams = z.infer<typeof MessageParams>;
+export const messageParams = SysMessageParams.and(UserMessageParams)//.or(summarizeParams);
+export type MessageParams = z.infer<typeof messageParams>;
 
 const promptTypes = z.union([
     z.literal('reply'),
@@ -54,11 +54,11 @@ const operationType = z.union([
     promptTypes,
 ]);
 
+
 const inputData = z.object({
-    type: promptTypes,
-    data: MessageParams,
-    auth: z.string(),
-    mode: z.enum(["stream", "single"]),
+    data: messageParams,
+    type: operationType,
+    mode: z.enum(["stream"]).optional(),
 });
 
 // Infer types from schemas
