@@ -12,8 +12,8 @@ import { auth, firestore as db } from './utils/firebase';
 
 
 config();
-
-const PORT = process.env.PORT || 80;
+// Default for websockets is 80 but sveltekit uses 80
+const PORT = process.env.PORT || 8001;
 const JWT_SECRET = process.env.JWT_SECRET || 'secret';
 const JWT_EXPIRATION = '2weeks';
 
@@ -79,14 +79,14 @@ app.get('/user', async (req, res) => {
 server.on('upgrade', async function upgrade(request, socket, head) {
   socket.on('error', handleWebsocketError);
   const { headers } = request;
-  const token = headers.authorization?.split(' ')[1] || ""
-  if (!token) {
+  // @ts-ignore - WS sucks at times.
+  const token = headers?.["sec-websocket-protocol"] || ""
+  if (!token || typeof token !== 'string') {
     socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
     socket.destroy();
   }
 
   try {
-
     const claims = jwt.verify(token, JWT_SECRET);
     // @ts-ignore - uid is not a property of decoded
     const uid: string = claims?.uid;
@@ -126,9 +126,9 @@ wss.on('connection', function connection(ws: WebSocket) {
         }
         // DONT DO THIS; MALFORMED JSON WILL ALWAYS THROW. HANDLE IT GRACEFULLY
         const parsedData = JSON.parse(rawData.toString())
-        const { success, data } = validateInput(parsedData)
-        logger({ parsedData: data })
-        if (!success) return ws.send(Buffer.from(JSON.stringify({ error: "invalid input" })))
+        const { success, data, error } = validateInput(parsedData)
+        logger({ parsedData: data, error })
+        if (!success) return ws.send(Buffer.from(JSON.stringify({ error: "invalid input," + error })))
         const validatedInput = data as InputData
         switch (validatedInput.mode) {
           // TODO: add metadata to the response

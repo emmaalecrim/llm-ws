@@ -10,7 +10,7 @@ export const MessageType = z.object({
 
 export const SysMessageParams = z.object({
     host: z.string(),
-    arch: z.string(),
+    arch: z.string().optional(),
     suggestion: z.string().optional(),
     calendarLink: z.string().optional(),
     signOffName: z.string().optional(),
@@ -58,7 +58,7 @@ const operationType = z.union([
 const inputData = z.object({
     data: messageParams,
     type: operationType,
-    mode: z.enum(["stream"]).optional(),
+    mode: z.enum(["stream", "completion"]).optional(),
 });
 
 // Infer types from schemas
