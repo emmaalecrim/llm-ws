@@ -18,7 +18,7 @@ const handlePromptTypes = async (ws: WebSocket, { prompt, data }: { prompt: Prom
         const { messages, config } = getMessages(prompt, data);
         logger({ messages, config })
         const completions = await sendMessages(messages, config);
-        // TODO: refactor into functional parsing
+        // TODO: refactor into functional parsing so this supports classify too
         if (prompt === "suggest") {
             const parsedCompletions = await csvToJson(completions?.choices[0]?.message?.content || "", ["emoji", "title", "text"])
             logger({ parsedCompletions })

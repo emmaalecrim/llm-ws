@@ -17,7 +17,8 @@
     "deploy:build:prod": "gcloud builds submit --region=global --config prod-cloudbuild.yaml",
     "deploy": "gcloud config set project truenation-dev && gcloud builds submit --region=global --config cloudbuild.yaml && gcloud run deploy glasswall-ws --image europe-west2-docker.pkg.dev/truenation-dev/glasswall-ws/main",
     "deploy:prod": "gcloud builds submit --region=global --config prod-cloudbuild.yaml && gcloud run deploy glasswall-ws --image europe-docker.pkg.dev/truefilter-10000/glasswall-ws/main",
-    "auth:refresh": "gcloud auth login && firebase login --reauth"
+    "auth:refresh": "gcloud auth login && firebase login --reauth",
+    "document-api": "ts-node ./src/utils/schemas/generateOAPI.ts"
   },
   "dependencies": {
     "@azure/openai": "^1.0.0-beta.5",

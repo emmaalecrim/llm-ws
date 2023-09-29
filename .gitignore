@@ -137,3 +137,4 @@ service.yaml
 jwtRS512.key.pub
 jwtRS512.key
 truenation-dev-6b80d0c98966.json
+src/utils/schemas/*.json
