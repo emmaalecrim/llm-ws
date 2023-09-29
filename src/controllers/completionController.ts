@@ -28,7 +28,8 @@ const handlePromptTypes = async (ws: WebSocket, { prompt, data }: { prompt: Prom
         return ws.send(Buffer.from(JSON.stringify(completions), ENCODING));
 
     } catch (e: any) {
-        logger("Error in completionController: " + e, "error");
+        logger("Error in completionController: ", "error");
+        logger(e, "error");
         ws.send(Buffer.from(JSON.stringify({ error: e.message }), ENCODING));
     }
 };

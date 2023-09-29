@@ -12,8 +12,8 @@ import { auth, firestore as db } from './utils/firebase';
 
 
 config();
-// Default for websockets is 80 but sveltekit uses 80
-const PORT = process.env.PORT || 8001;
+// Default for websockets is 80 but sveltekit uses 80 and GCP exposes 8080 by default
+const PORT = process.env.PORT || 8080;
 const JWT_SECRET = process.env.JWT_SECRET || 'secret';
 const JWT_EXPIRATION = '2weeks';
 
