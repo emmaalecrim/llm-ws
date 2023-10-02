@@ -9,6 +9,7 @@ import { InputData, validateInput } from './utils/schemas/completion';
 import logger from './utils/logging';
 import jwt from 'jsonwebtoken';
 import { auth, firestore as db } from './utils/firebase';
+import cors from 'cors';
 
 
 config();
@@ -19,8 +20,9 @@ const JWT_EXPIRATION = '2weeks';
 
 const app = express();
 const server = http.createServer(app);
-app.use(express.json());
-
+app.use(express.json(), cors({
+  origin: true,
+}));
 app.get('/health', (req, res) => {
   return res.status(200).send('OK');
 });
