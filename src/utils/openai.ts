@@ -26,7 +26,14 @@ const streamMessages = (
   config
 )
 
-
+// DEAR READER: The quota errors from Azure look like this:
+// {
+//   "message": "You exceeded your current quota, please check your plan and billing details.",
+//   "type": "insufficient_quota",
+//   "param": null,
+//   "code": "insufficient_quota"
+//   }
+// yes, they are very confusing to trace back to openai, being that theres no mention of them
 
 
 

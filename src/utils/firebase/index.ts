@@ -1,7 +1,10 @@
-import { applicationDefault, initializeApp } from "firebase-admin/app";
+import { initializeApp, applicationDefault } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
 
+// In your .env, set these two variables
+// GOOGLE_CLOUD_PROJECT=truenation-dev
+// GOOGLE_APPLICATION_CREDENTIALS=truenation-dev-6b80d0c98966.json
 const app = initializeApp({
     credential: applicationDefault(),
 });
@@ -18,4 +21,4 @@ console.info("Auth initialized");
 
 const getIdFromToken = async (token: string) => auth?.verifyIdToken(token)
 
-export { app, firestore, getIdFromToken };
+export { app, firestore, getIdFromToken, auth };
