@@ -10,8 +10,7 @@ export const input = z.object({
         .transform((val: string): string => normalizeText(val))
         .or(z.literal("")),
     })
-    .array(),
-  debug: z.boolean().optional(),
+    .array()
 });
 
 export const output = z

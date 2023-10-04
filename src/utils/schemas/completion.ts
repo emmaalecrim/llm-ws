@@ -1,8 +1,7 @@
 import { ZodError, z } from 'zod';
 import { extendZodWithOpenApi } from '@anatine/zod-openapi';
 import archetypes from '..//prompts/prompt-base/utils/archetypes';
-
-
+import { input as classifyParams } from './classify';
 
 extendZodWithOpenApi(z);
 
@@ -57,6 +56,7 @@ export type SummarizeParams = z.infer<typeof summarizeParams>;
 //  until I have time to refactor
 export const messageParams = SysMessageParams.and(UserMessageParams)
     .or(summarizeParams)
+    .or(classifyParams)
     .openapi({ title: 'messageParams', description: "Parameters that will be passed into a prompt or agent." })
 export type MessageParams = z.infer<typeof messageParams>;
 
@@ -68,6 +68,7 @@ const promptTypes = z.union([
     z.literal('suggest'),
     z.literal('tone'),
     z.literal('short'),
+    z.literal('classify'),
 ])
     .openapi({ title: 'promptTypes', description: "Name of the prompt you want to use for the completion." });
 
