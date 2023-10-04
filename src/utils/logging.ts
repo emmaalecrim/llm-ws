@@ -2,7 +2,7 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 
-const debug = process.env.DEBUG === "true";
+const debug = process.env.DEBUG == "true";
 
 // TODO: spread args
 const logger = (message: any, level: "debug" | "info" | "log" | "error" = "debug"): void => {
