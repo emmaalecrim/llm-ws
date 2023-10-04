@@ -1,7 +1,7 @@
 import { WebSocket } from "ws";
 import { sendMessages } from "../utils/openai";
 import getMessages from "../utils/prompts/helpers";
-import { csvToJson } from "../utils/parsing";
+import { parseCompletion, parsers } from "../utils/parsing";
 import logger from "../utils/logging";
 import { InputData, PromptTypes, MessageParams } from "../utils/schemas/completion";
 
@@ -18,18 +18,16 @@ const handlePromptTypes = async (ws: WebSocket, { prompt, data }: { prompt: Prom
         const { messages, config } = getMessages(prompt, data);
         logger({ messages, config })
         const completions = await sendMessages(messages, config);
-        // TODO: refactor into functional parsing so this supports classify too
-        if (prompt === "suggest") {
-            const parsedCompletions = await csvToJson(completions?.choices[0]?.message?.content || "", ["emoji", "title", "text"])
+        if (Object.keys(parsers).includes(prompt)) {
+            // @ts-expect-error - only parser keys are allowed
+            const parsedCompletions = await parseCompletion(prompt, completions?.choices[0]?.message?.content || "")
             logger({ parsedCompletions })
             return ws.send(Buffer.from(JSON.stringify(parsedCompletions), ENCODING));
         }
-        logger({ completions })
         return ws.send(Buffer.from(JSON.stringify(completions), ENCODING));
-
     } catch (e: any) {
-        logger("Error in completionController: ", "error");
-        logger(e, "error");
+        logger(`Error in handlePromptTypes: ${JSON.stringify(e.message)}`, "error");
+        console.log(e)
         ws.send(Buffer.from(JSON.stringify({ error: e.message }), ENCODING));
     }
 };
@@ -46,7 +44,7 @@ const completionController = async (ws: WebSocket, validatedData: InputData): Pr
         if (type === "summarize") throw new Error("summarize is not supported")
         return await handlePromptTypes(ws, { prompt: type, data });
     } catch (e: any) {
-        console.error(e);
+        logger(`Error in completionController: ${JSON.stringify(e)}`, "error");
         ws.send(Buffer.from(JSON.stringify({ error: e.message }), ENCODING));
     }
 }

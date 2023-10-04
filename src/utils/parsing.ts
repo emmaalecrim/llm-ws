@@ -16,4 +16,15 @@ export function isJSON(str: string) {
     }
 }
 
-// TODO: parseCompletion => parses and validates completion data based on type
+export const parsers = {
+    suggest: {
+        headers: ["emoji", "title", "text"]
+    },
+    classify: {
+        headers: ["original_comment", "category", "is_harmful", "description", "emoji"]
+    },
+}
+
+export function parseCompletion(type: "suggest" | "classify", str: string) {
+    return csvToJson(str, parsers[type].headers)
+}
