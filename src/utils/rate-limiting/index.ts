@@ -6,14 +6,25 @@ const day = hour * 24;
 // const week = day * 7;
 // const month = day * 30;
 
+/*
+    Disclaimer on execEvenly:
+    Action is delayed by formula: Milliseconds before points reset / ( Remaining Points in current duration + 2 ) 
+    with execEvenlyMinDelayMs = duration in milliseconds / points between actions. 
+    If delay is less than execEvenlyMinDelayMs, delay is consumed points in current duration * execEvenlyMinDelayMs. 
+    This formula results to dynamic leak rate as it aims to divide spare time evenly before points reset.
+    
+    See for more info: 
+    https://github.com/animir/node-rate-limiter-flexible/wiki/Smooth-out-traffic-peaks#smooth-out-traffic-peaks
+*/
+
 const limitersConfig = {
     // This is for limiting and throttling connections to the server to prevent abuse
     default: {
         keyPrefix: "usage",
         points: 100,
         duration: min,
-        // https://github.com/animir/node-rate-limiter-flexible/wiki/Smooth-out-traffic-peaks#smooth-out-traffic-peaks
-        execEvenly: true, // delay actions evenly. If you're using this you have to keep points and duration in mind.
+
+        execEvenly: true, // delay actions evenly.
     },
     // Note that this point system is great because we can calculate how many points to consume so users 
     // can get more out of their free tier(small context is cheaper) - nice comunity feature
