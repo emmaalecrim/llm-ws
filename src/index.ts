@@ -55,10 +55,10 @@ app.get('/user', authenticate, async (req, res) => {
     const uid: string = req.claims?.uid;
     const [user, data] = await Promise.all([
       auth.getUser(uid).catch((e) => logger(`Error in auth.getUser: ${e.message}`, "error")),
-      db.collection('users').doc(uid).get().then((snap) => snap.data).catch((e) => logger(`Error in db.collection('users').doc(${uid}).get(): ${e.message}`, "error"))
+      db.collection('users').doc(uid).get().then((snap) => snap?.data()).catch((e) => logger(`Error in db.collection('users').doc(${uid}).get(): ${e.message}`, "error"))
     ])
     // TODO: cherry pick data to send back to prevent leaking sensitive data
-    return res.json({ user, userData: data });
+    return res.json({ user, data });
   } catch (e: any) {
     logger(`Error in /exchange: ${e.message}`, "error")
     return res.status(500).json({ error: e.message });
@@ -87,13 +87,28 @@ server.on('upgrade', async function upgrade(request: Request, socket, head) {
 // WEBSOCKET SERVER - connects to express app via upgrade handler
 const wss = new WebSocketServer({ noServer: true });
 
-wss.on('connection', function connection(ws: WebSocket, _: any, claims: jwt.JwtPayload) {
+wss.on('connection', async function connection(ws: WebSocket, _: any, claims: jwt.JwtPayload) {
+  try {
+    await usageLimiter.consume(claims?.uid)
+  } catch (e: any) {
+    const rateLimiterError = e?.message || "Too many connections. Please wait before reconnecting."
+    logger(`Error in rate limiting stage of connect listener: ${e.message}`, "error")
+    ws.send(Buffer.from(JSON.stringify({ error: `Error in rate limiting: ${rateLimiterError}` })))
+    return ws.close()
+  }
+  logger({ message: "Connection Stablished", ws, claims })
   ws.on('pong', heartbeat); // WebSocket Ping/Pong
   ws.on('message', async (rawData: RawData) => {
-    const usage = claims?.isSub ?
-      await usageLimiter.consume(claims?.uid) :
-      await completionFreeTierLimiter.consume(claims?.uid)
-    ws.send(Buffer.from(JSON.stringify({ usage })))
+    try {
+      const usage = await completionFreeTierLimiter.consume(claims?.uid)
+      ws.send(Buffer.from(JSON.stringify({ usage })))
+    }
+    catch (e: any) {
+      const rateLimiterError = e?.message || "You're requesting at too high a rate. Please wait "
+      logger(`Error in rate limiting stage: ${e.message}`, "error")
+      ws.send(Buffer.from(JSON.stringify({ error: `Error in rate limiting: ${rateLimiterError}` })))
+      return ws.close()
+    }
     try {
       if (!Buffer.isBuffer(rawData)) return ws.send(Buffer.from(JSON.stringify({ error: "Invalid input type. Expected BufferLike" })))
       // Parse and validate input
