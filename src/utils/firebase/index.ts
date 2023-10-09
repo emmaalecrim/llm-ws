@@ -1,12 +1,16 @@
-import { initializeApp, applicationDefault } from "firebase-admin/app";
+import { initializeApp, cert, Credential, applicationDefault } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
+import { config } from 'dotenv';
 
+
+config();
 // In your .env, set these two variables
 // GOOGLE_CLOUD_PROJECT=truenation-dev
 // GOOGLE_APPLICATION_CREDENTIALS=truenation-dev-6b80d0c98966.json
+const cred: Credential = (process.env.GOOGLE_APPLICATION_CREDENTIALS) ? cert(process.env.GOOGLE_APPLICATION_CREDENTIALS) : applicationDefault()
 const app = initializeApp({
-    credential: applicationDefault(),
+    credential: cred,
 });
 
 console.info("Firebase Admin SDK initialized", app.name);
