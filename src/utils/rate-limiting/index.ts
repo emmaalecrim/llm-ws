@@ -9,10 +9,10 @@ const month = day * 30;
 const limitersConfig = {
     // This is for limiting and throttling connections to the server to prevent abuse
     default: {
-        points: 10,
+        points: 100,
         duration: min,
         // https://github.com/animir/node-rate-limiter-flexible/wiki/Smooth-out-traffic-peaks#smooth-out-traffic-peaks
-        execEvenly: true, // delay actions evenly 
+        execEvenly: true, // delay actions evenly. If you're using this you have to keep points and duration in mind.
     },
     // Note that this point system is great because we can calculate how many points to consume so users 
     // can get more out of their free tier(small context is cheaper) - nice comunity feature
