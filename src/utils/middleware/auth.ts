@@ -1,7 +1,7 @@
 import { NextFunction, Request } from 'express'
 import jwt from 'jsonwebtoken'
 import { config } from 'dotenv';
-import { getIdFromToken } from '../firebase';
+import { getIdFromToken, checkSubscriptionStatus } from '../firebase';
 import logger from '../logging';
 
 
@@ -9,12 +9,14 @@ config();
 const JWT_SECRET = process.env.JWT_SECRET || 'secret';
 // const JWT_EXPIRATION = '2weeks';
 
-function authenticate(req: Request, res: any, next: NextFunction) {
+async function authenticate(req: Request, res: any, next: NextFunction) {
     try {
         const token: string = req?.headers?.["sec-websocket-protocol"] || req?.header('Authorization')?.split(' ')[1] || "";
         const claims = jwt.verify(token, JWT_SECRET);
-        // @ts-ignore - urgh
+        // @ts-ignore - urgh    
         req.claims = claims
+        // @ts-ignore - urgh    
+        if (!claims.isSub) req.claims.isSub = await checkSubscriptionStatus(claims.uid)
         return next()
     } catch (e: any) {
         logger(`Error in auth middleware: ${e.message}`, "error")
