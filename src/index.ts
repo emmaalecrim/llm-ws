@@ -36,7 +36,7 @@ app.use(express.json(), cors({
 // Exchanges FB session token for longer lived JWT session token(not using JWT to avoid the potential leak)- you can very easily refactor this to be a user session later on
 app.post('/exchange', authenticateWithFirebase, async (req, res) => {
   try {
-    // @ts-ignore - uid is not a property of decoded
+    // @ts-ignore - claims is not a property of Request
     const uid: string = req.claims?.uid;
     const isSub = await checkSubscriptionStatus(uid)
     // If the token is valid, use jwt to sign the uid. Sub is the standard claim for the user id and uid is a custom claim for ease. We respect the pattern.
@@ -52,7 +52,7 @@ app.use(authenticate);
 // get user data for the JWT
 app.get('/user', async (req, res) => {
   try {
-    // @ts-ignore - uid is not a property of decoded
+    // @ts-ignore - claims is not a property of Request
     const uid: string = req.claims?.uid;
     const [user, data] = await Promise.all([
       getAuthUser(uid),
@@ -68,14 +68,14 @@ app.get('/user', async (req, res) => {
 
 app.get('/usage', async (req, res) => {
   try {
-    // @ts-expect-error - uid is not a property of decoded
-    console.log(req.claims)
-    // @ts-expect-error - uid is not a property of decoded
+    // @ts-ignore - claims is not a property of Request
+    if (req.claims?.isSub) return res.json({ usage: "unlimited" });
+    // @ts-ignore - claims is not a property of Request
     const usage = await completionFreeTierLimiter.get(req?.claims?.uid);
-    res.json({ usage });
+    return res.json({ usage });
   } catch (e: any) {
     logger(`Error in /usage: ${e.message}`, "error");
-    res.status(500).json({ error: e.message });
+    return res.status(500).json({ error: e.message });
   }
 });
 
@@ -88,7 +88,7 @@ server.on('upgrade', async function upgrade(request: Request, socket, head) {
     authenticate(request, {}, () => null)
     socket.removeListener('error', handleWebsocketError);
     return wss.handleUpgrade(request, socket, head, function done(ws) {
-      // @ts-ignore - claims is not a property of request
+      // @ts-ignore - claims is not a property of Request
       wss.emit('connection', ws, request, request.claims);
     });
   } catch (e: any) {
@@ -101,7 +101,6 @@ server.on('upgrade', async function upgrade(request: Request, socket, head) {
 const wss = new WebSocketServer({ noServer: true });
 
 wss.on('connection', async function connection(ws: WebSocket, _: any, claims: jwt.JwtPayload) {
-  // TODO: Move to upgrade
   usageLimiter.consume(claims?.uid)
     .then(() => {
       // Success case

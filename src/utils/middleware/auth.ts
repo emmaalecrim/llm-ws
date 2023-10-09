@@ -9,13 +9,24 @@ config();
 const JWT_SECRET = process.env.JWT_SECRET || 'secret';
 // const JWT_EXPIRATION = '2weeks';
 
+export type Claims = {
+    uid: string,
+    sub: string,
+    isSub: boolean
+}
+
+export interface AuthenticatedRequest extends Request {
+    claims: Claims
+}
+
+
 async function authenticate(req: Request, res: any, next: NextFunction) {
     try {
         const token: string = req?.headers?.["sec-websocket-protocol"] || req?.header('Authorization')?.split(' ')[1] || "";
-        const claims = jwt.verify(token, JWT_SECRET);
-        // @ts-ignore - urgh    
+        const claims = jwt.verify(token, JWT_SECRET) as Claims
+        // @ts-ignore - claims is not a property of Request
         req.claims = claims
-        // @ts-ignore - urgh    
+        // @ts-ignore - claims is not a property of Request
         if (!claims.isSub) req.claims.isSub = await checkSubscriptionStatus(claims.uid)
         return next()
     } catch (e: any) {
@@ -30,7 +41,7 @@ async function authenticateWithFirebase(req: Request, res: any, next: NextFuncti
         if (!idToken) throw new Error("No ID token provided")
         // Verify the ID token first.
         const decodedToken = await getIdFromToken(idToken);
-        // @ts-ignore - urgh
+        // @ts-ignore - claims is not a property of Request
         req.claims = decodedToken
         return next()
     } catch (e: any) {
