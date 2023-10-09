@@ -27,7 +27,6 @@ const handlePromptTypes = async (ws: WebSocket, { prompt, data }: { prompt: Prom
         return ws.send(Buffer.from(JSON.stringify(completions), ENCODING));
     } catch (e: any) {
         logger(`Error in handlePromptTypes: ${JSON.stringify(e.message)}`, "error");
-        console.log(e)
         ws.send(Buffer.from(JSON.stringify({ error: e.message }), ENCODING));
     }
 };
