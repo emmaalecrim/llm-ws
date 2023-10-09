@@ -1,8 +1,15 @@
 import { usageLimiter } from "../rate-limiting";
 
 const rateLimiterMiddleware = (req: any, res: any, next: Function) => {
+
     usageLimiter.consume(req.ip)
-        .then(() => {
+        .then((usage) => {
+            const headers = {
+                "Retry-After": usage.msBeforeNext / 1000,
+                "X-RateLimit-Remaining": usage.remainingPoints,
+                "X-RateLimit-Reset": new Date(Date.now() + usage.msBeforeNext)
+            }
+            res.set(headers);
             next();
         })
         .catch(() => {
