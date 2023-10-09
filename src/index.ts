@@ -116,7 +116,7 @@ wss.on('connection', async function connection(ws: WebSocket, _: any, claims: jw
   // move above to upgrade
   ws.on('pong', heartbeat); // WebSocket Ping/Pong
   ws.on('message', async (rawData: RawData) => {
-    if (claims?.isSub) completionFreeTierLimiter.consume(claims?.uid)
+    if (!claims?.isSub) completionFreeTierLimiter.consume(claims?.uid)
       .then((usage) =>
         ws.send(Buffer.from(JSON.stringify({ usage }))))
       .catch((e: any) => {
