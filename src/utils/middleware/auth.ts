@@ -11,7 +11,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'secret';
 
 function authenticate(req: Request, res: any, next: NextFunction) {
     try {
-        const token: string = req?.header('Authorization')?.split(' ')[1] || "";
+        const token: string = req?.headers?.["sec-websocket-protocol"] || req?.header('Authorization')?.split(' ')[1] || "";
         const claims = jwt.verify(token, JWT_SECRET);
         // @ts-ignore - urgh
         req.claims = claims
