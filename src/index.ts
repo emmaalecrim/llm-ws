@@ -129,15 +129,15 @@ wss.on('connection', async function connection(ws: WebSocket, _: any, claims: jw
       // Parse and validate input
       const parsedData = JSON.parse(rawData.toString())
       const { success, data, error } = validateInput(parsedData)
-      const validatedInput = data as InputData
+      const payload = data as InputData
       logger({ data, error })
       if (!success) return ws.send(Buffer.from(JSON.stringify({ error: "invalid input," + error })))
       // Move to controllers
-      switch (validatedInput.mode) {
+      switch (payload.mode) {
         case "stream":
-          return completionStreamController(ws, validatedInput)
+          return completionStreamController(ws, payload)
         default:
-          return completionController(ws, validatedInput)
+          return completionController(ws, payload)
       }
 
     } catch (e: any) {
