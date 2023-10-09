@@ -2,6 +2,7 @@ import { initializeApp, cert, Credential, applicationDefault } from "firebase-ad
 import { getFirestore } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
 import { config } from 'dotenv';
+import logger from "../logging";
 
 
 config();
@@ -24,5 +25,9 @@ const auth = getAuth(app)
 console.info("Auth initialized");
 
 const getIdFromToken = async (token: string) => auth?.verifyIdToken(token)
+
+export const checkSubscriptionStatus = (uid: string) => firestore.collection('users').doc(uid).get().then((snap) => snap.data()?.subscribed || false)
+export const getAuthUser = (uid: string) => auth.getUser(uid).catch((e) => logger(`Error in auth.getUser: ${e.message}`, "error"))
+export const getUserData = (uid: string) => firestore.collection('users').doc(uid).get().then((snap) => snap?.data()).catch((e) => logger(`Error in db.collection('users').doc(${uid}).get(): ${e.message}`, "error"))
 
 export { app, firestore, getIdFromToken, auth };

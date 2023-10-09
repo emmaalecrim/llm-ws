@@ -2,7 +2,7 @@ import express, { Request } from 'express';
 import { RawData, WebSocket, Server as WebSocketServer } from 'ws';
 // Auth and rate limiting
 import jwt from 'jsonwebtoken';
-import { auth, firestore as db } from './utils/firebase';
+import { checkSubscriptionStatus, getAuthUser, getUserData } from './utils/firebase';
 import { completionFreeTierLimiter, usageLimiter } from './utils/rate-limiting';
 // Middleware 
 import { authenticate, authenticateWithFirebase } from './utils/middleware/auth';
@@ -29,6 +29,7 @@ const app = express();
 app.get('/health', (req, res) => {
   return res.status(200).send('OK');
 });
+// MIDDLEWARE
 app.use(express.json(), cors({
   origin: true,
 }), rateLimiterMiddleware);
@@ -37,8 +38,7 @@ app.post('/exchange', authenticateWithFirebase, async (req, res) => {
   try {
     // @ts-ignore - uid is not a property of decoded
     const uid: string = req.claims?.uid;
-    const isSub = db.collection('users').doc(uid).get()
-      .then((snap) => snap.data()?.subscribed)
+    const isSub = await checkSubscriptionStatus(uid)
     // If the token is valid, use jwt to sign the uid. Sub is the standard claim for the user id and uid is a custom claim for ease. We respect the pattern.
     const token = jwt.sign({ sub: uid, uid, isSub }, JWT_SECRET, { expiresIn: JWT_EXPIRATION });
     // Send it back
@@ -48,20 +48,34 @@ app.post('/exchange', authenticateWithFirebase, async (req, res) => {
     return res.status(500).json({ error: e.message });
   }
 });
+app.use(authenticate);
 // get user data for the JWT
-app.get('/user', authenticate, async (req, res) => {
+app.get('/user', async (req, res) => {
   try {
     // @ts-ignore - uid is not a property of decoded
     const uid: string = req.claims?.uid;
     const [user, data] = await Promise.all([
-      auth.getUser(uid).catch((e) => logger(`Error in auth.getUser: ${e.message}`, "error")),
-      db.collection('users').doc(uid).get().then((snap) => snap?.data()).catch((e) => logger(`Error in db.collection('users').doc(${uid}).get(): ${e.message}`, "error"))
+      getAuthUser(uid),
+      getUserData(uid)
     ])
     // TODO: cherry pick data to send back to prevent leaking sensitive data
     return res.json({ user, data });
   } catch (e: any) {
     logger(`Error in /exchange: ${e.message}`, "error")
     return res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/usage', async (req, res) => {
+  try {
+    // @ts-expect-error - uid is not a property of decoded
+    console.log(req.claims)
+    // @ts-expect-error - uid is not a property of decoded
+    const usage = await completionFreeTierLimiter.get(req?.claims?.uid);
+    res.json({ usage });
+  } catch (e: any) {
+    logger(`Error in /usage: ${e.message}`, "error");
+    res.status(500).json({ error: e.message });
   }
 });
 
@@ -72,7 +86,6 @@ server.on('upgrade', async function upgrade(request: Request, socket, head) {
   socket.on('error', handleWebsocketError);
   try {
     authenticate(request, {}, () => null)
-
     socket.removeListener('error', handleWebsocketError);
     return wss.handleUpgrade(request, socket, head, function done(ws) {
       // @ts-ignore - claims is not a property of request
@@ -88,26 +101,28 @@ server.on('upgrade', async function upgrade(request: Request, socket, head) {
 const wss = new WebSocketServer({ noServer: true });
 
 wss.on('connection', async function connection(ws: WebSocket, _: any, claims: jwt.JwtPayload) {
-  try {
-    usageLimiter.consume(claims?.uid)
-  } catch (e: any) {
-    const rateLimiterError = e?.message || "Too many connections. Please wait before reconnecting."
-    logger(`Error in rate limiting stage of connect listener: ${e.message}`, "error")
-    ws.send(Buffer.from(JSON.stringify({ error: `Error in rate limiting: ${rateLimiterError}` })))
-    return ws.close()
-  }
+  // TODO: Move to upgrade
+  usageLimiter.consume(claims?.uid)
+    .then(() => {
+      // Success case
+    })
+    .catch((e: any) => {
+      const rateLimiterError = e?.message || "Too many connections. Please wait before reconnecting."
+      logger(`Error in rate limiting stage of connect listener: ${e.message}`, "error")
+      ws.send(Buffer.from(JSON.stringify({ error: `Error in rate limiting: ${rateLimiterError}` })))
+      return ws.close()
+    });
   logger({ message: "Connection Stablished", ws, claims })
+  // move above to upgrade
   ws.on('pong', heartbeat); // WebSocket Ping/Pong
   ws.on('message', async (rawData: RawData) => {
     if (claims?.isSub) completionFreeTierLimiter.consume(claims?.uid)
-      .then((usage) => {
-
-        ws.send(Buffer.from(JSON.stringify({ usage })))
-      })
+      .then((usage) =>
+        ws.send(Buffer.from(JSON.stringify({ usage }))))
       .catch((e: any) => {
-        const rateLimiterError = e?.message || "You're requesting at too high a rate. Please wait "
-        logger(`Error in rate limiting stage: ${e.message}`, "error")
-        ws.send(Buffer.from(JSON.stringify({ error: `Error in rate limiting: ${rateLimiterError}` })))
+        const rateLimiterError = e?.message || "You're connecting at too high a rate. Please wait before trying again."
+        logger(`Error in connection rate-limit stage: ${e.message}`, "error")
+        ws.send(Buffer.from(JSON.stringify({ error: `Error in connection rate-limit stage: ${rateLimiterError}` })))
         return ws.close()
       });
     try {
@@ -120,7 +135,6 @@ wss.on('connection', async function connection(ws: WebSocket, _: any, claims: jw
       if (!success) return ws.send(Buffer.from(JSON.stringify({ error: "invalid input," + error })))
       // Move to controllers
       switch (validatedInput.mode) {
-        // TODO: add metadata to the response
         case "stream":
           return completionStreamController(ws, validatedInput)
         default:
