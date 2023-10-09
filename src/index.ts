@@ -1,15 +1,21 @@
+import express, { Request } from 'express';
 import { RawData, WebSocket, Server as WebSocketServer } from 'ws';
-import completionStreamController from './controllers/completionStreamController';
-import completionController from './controllers/completionController';
-import { getIdFromToken } from './utils/firebase';
-import { config } from 'dotenv';
-import express from 'express';
-import http from 'http';
-import { InputData, validateInput } from './utils/schemas/completion';
-import logger from './utils/logging';
+// Auth and rate limiting
 import jwt from 'jsonwebtoken';
 import { auth, firestore as db } from './utils/firebase';
+import { completionFreeTierLimiter, usageLimiter } from './utils/rate-limiting';
+// Middleware 
+import { authenticate, authenticateWithFirebase } from './utils/middleware/auth';
+import rateLimiterMiddleware from './utils/middleware/rate-limiting';
 import cors from 'cors';
+// Controllers 
+import completionController from './controllers/completionController';
+import completionStreamController from './controllers/completionStreamController';
+// Validation
+import { InputData, validateInput } from './utils/schemas/completion';
+// Misc 
+import logger from './utils/logging';
+import { config } from 'dotenv';
 
 
 config();
@@ -19,30 +25,22 @@ const JWT_SECRET = process.env.JWT_SECRET || 'secret';
 const JWT_EXPIRATION = '2weeks';
 
 const app = express();
-const server = http.createServer(app);
-app.use(express.json(), cors({
-  origin: true,
-}));
+// TCP PROBE
 app.get('/health', (req, res) => {
   return res.status(200).send('OK');
 });
-
+app.use(express.json(), cors({
+  origin: true,
+}), rateLimiterMiddleware);
 // Exchanges FB session token for longer lived JWT session token(not using JWT to avoid the potential leak)- you can very easily refactor this to be a user session later on
-app.post('/exchange', async (req, res) => {
+app.post('/exchange', authenticateWithFirebase, async (req, res) => {
   try {
-    const idToken: string = req?.header('Authorization')?.split(' ')[1] || "";
-    if (!idToken) throw new Error("No ID token provided")
-    // Verify the ID token first.
-    let decodedToken;
-    try {
-      decodedToken = await getIdFromToken(idToken);
-    } catch (e: any) {
-      logger(`Error in auth.verifyIdToken: ${e.message}`, "error")
-      return res.status(401).json({ error: "Invalid ID token" });
-    }
-    const uid = decodedToken.uid;
+    // @ts-ignore - uid is not a property of decoded
+    const uid: string = req.claims?.uid;
+    const isSub = db.collection('users').doc(uid).get()
+      .then((snap) => snap.data()?.subscribed)
     // If the token is valid, use jwt to sign the uid. Sub is the standard claim for the user id and uid is a custom claim for ease. We respect the pattern.
-    const token = jwt.sign({ sub: uid, uid }, JWT_SECRET, { expiresIn: JWT_EXPIRATION });
+    const token = jwt.sign({ sub: uid, uid, isSub }, JWT_SECRET, { expiresIn: JWT_EXPIRATION });
     // Send it back
     return res.json({ token });
   } catch (e: any) {
@@ -50,20 +48,11 @@ app.post('/exchange', async (req, res) => {
     return res.status(500).json({ error: e.message });
   }
 });
-
 // get user data for the JWT
-app.get('/user', async (req, res) => {
+app.get('/user', authenticate, async (req, res) => {
   try {
-    const token: string = req?.header('Authorization')?.split(' ')[1] || "";
-    let claims
-    try {
-      claims = jwt.verify(token, JWT_SECRET);
-    } catch (e: any) {
-      logger(`Error in jwt.verify: ${e.message}`, "error")
-      return res.status(401).json({ error: "Invalid JWT" });
-    }
     // @ts-ignore - uid is not a property of decoded
-    const uid: string = claims?.uid;
+    const uid: string = req.claims?.uid;
     const [user, data] = await Promise.all([
       auth.getUser(uid).catch((e) => logger(`Error in auth.getUser: ${e.message}`, "error")),
       db.collection('users').doc(uid).get().then((snap) => snap.data).catch((e) => logger(`Error in db.collection('users').doc(${uid}).get(): ${e.message}`, "error"))
@@ -76,30 +65,18 @@ app.get('/user', async (req, res) => {
   }
 });
 
+const server = app.listen(PORT, () => logger(`Listening on port ${PORT}`));
 
 // WEBSOCKET UPGRADE HANDLER (https to ws upgrade) - auth control via exchange token
-server.on('upgrade', async function upgrade(request, socket, head) {
+server.on('upgrade', async function upgrade(request: Request, socket, head) {
   socket.on('error', handleWebsocketError);
-  const { headers } = request;
-  // @ts-ignore - WS sucks at times.
-  const token = headers?.["sec-websocket-protocol"] || ""
-  if (!token || typeof token !== 'string') {
-    socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
-    socket.destroy();
-  }
-
   try {
-    const claims = jwt.verify(token, JWT_SECRET);
-    // @ts-ignore - uid is not a property of decoded
-    const uid: string = claims?.uid;
-    if (!uid) {
-      socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
-      return socket.destroy();
-    }
+    authenticate(request, {}, () => null)
 
     socket.removeListener('error', handleWebsocketError);
     return wss.handleUpgrade(request, socket, head, function done(ws) {
-      wss.emit('connection', ws, request);
+      // @ts-ignore - claims is not a property of request
+      wss.emit('connection', ws, request, request.claims);
     });
   } catch (e: any) {
     logger(`Error in https to wss upgrade: ${e.message}`, "error")
@@ -107,39 +84,33 @@ server.on('upgrade', async function upgrade(request, socket, head) {
     return socket.destroy()
   }
 });
-
-// WEBSOCKET SERVER
+// WEBSOCKET SERVER - connects to express app via upgrade handler
 const wss = new WebSocketServer({ noServer: true });
 
-wss.on('connection', function connection(ws: WebSocket) {
-  // @ts-expect-error - isAlive is not a property of WebSocket
-  ws.isAlive = true;
-  // @ts-expect-error - isAlive is not a property of WebSocket
-  ws.on('pong', () => ws.isAlive = true); // WebSocket Ping/Pong
-
+wss.on('connection', function connection(ws: WebSocket, _: any, claims: jwt.JwtPayload) {
+  ws.on('pong', heartbeat); // WebSocket Ping/Pong
   ws.on('message', async (rawData: RawData) => {
+    const usage = claims?.isSub ?
+      await usageLimiter.consume(claims?.uid) :
+      await completionFreeTierLimiter.consume(claims?.uid)
+    ws.send(Buffer.from(JSON.stringify({ usage })))
     try {
-      if (Buffer.isBuffer(rawData)) {
-        if (rawData.toString() === "ping") {
-          // @ts-expect-error - isAlive is not a property of WebSocket
-          ws.isAlive = false;
-          ws.ping('', false); // WebSocket Ping/Pong
-          return ws.send("pong");
-        }
-        // DONT DO THIS; MALFORMED JSON WILL ALWAYS THROW. HANDLE IT GRACEFULLY
-        const parsedData = JSON.parse(rawData.toString())
-        const { success, data, error } = validateInput(parsedData)
-        logger({ parsedData: data, error })
-        if (!success) return ws.send(Buffer.from(JSON.stringify({ error: "invalid input," + error })))
-        const validatedInput = data as InputData
-        switch (validatedInput.mode) {
-          // TODO: add metadata to the response
-          case "stream":
-            return completionStreamController(ws, validatedInput)
-          default:
-            return completionController(ws, validatedInput)
-        }
+      if (!Buffer.isBuffer(rawData)) return ws.send(Buffer.from(JSON.stringify({ error: "Invalid input type. Expected BufferLike" })))
+      // Parse and validate input
+      const parsedData = JSON.parse(rawData.toString())
+      const { success, data, error } = validateInput(parsedData)
+      const validatedInput = data as InputData
+      logger({ data, error })
+      if (!success) return ws.send(Buffer.from(JSON.stringify({ error: "invalid input," + error })))
+      // Move to controllers
+      switch (validatedInput.mode) {
+        // TODO: add metadata to the response
+        case "stream":
+          return completionStreamController(ws, validatedInput)
+        default:
+          return completionController(ws, validatedInput)
       }
+
     } catch (e: any) {
       logger(`Error in controller: ${e.message}`, "error")
       ws.send(Buffer.from(JSON.stringify({ error: `Error in controller: ${e.message}` })))
@@ -156,25 +127,22 @@ const handleWebsocketError = (ws: WebSocket, e: Error) => {
   return ws.close()
 }
 
-setInterval(() => {
-  wss.clients.forEach((ws: any) => {
-    if (!ws.isAlive) return ws.terminate();
-
+function heartbeat() {
+  // @ts-ignore - isAlive is not a property of WebSocket
+  this.isAlive = true;
+}
+const interval = setInterval(function ping() {
+  wss.clients.forEach(function each(ws) {
+    // @ts-ignore - isAlive is not a property of WebSocket
+    if (ws.isAlive === false) return ws.terminate();
+    // @ts-ignore - isAlive is not a property of WebSocket
     ws.isAlive = false;
-    ws.ping('', false);
+    ws.ping();
   });
-}, 30000); // 30 second interval
+}, 30000);
 
-// PROCESS HANDLING
 
-process.on('SIGINT', () => {
-  logger('SIGINT signal received. Shutting down gracefully');
-  server.close();
+wss.on('close', function close() {
+  clearInterval(interval);
 });
 
-process.on('SIGTERM', () => {
-  logger('SIGTERM signal received. Shutting down gracefully');
-  server.close();
-});
-
-server.listen(PORT, () => logger(`Listening on port ${PORT}`));
