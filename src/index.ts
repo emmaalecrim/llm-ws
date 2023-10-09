@@ -89,7 +89,7 @@ const wss = new WebSocketServer({ noServer: true });
 
 wss.on('connection', async function connection(ws: WebSocket, _: any, claims: jwt.JwtPayload) {
   try {
-    await usageLimiter.consume(claims?.uid)
+    usageLimiter.consume(claims?.uid)
   } catch (e: any) {
     const rateLimiterError = e?.message || "Too many connections. Please wait before reconnecting."
     logger(`Error in rate limiting stage of connect listener: ${e.message}`, "error")
@@ -99,16 +99,17 @@ wss.on('connection', async function connection(ws: WebSocket, _: any, claims: jw
   logger({ message: "Connection Stablished", ws, claims })
   ws.on('pong', heartbeat); // WebSocket Ping/Pong
   ws.on('message', async (rawData: RawData) => {
-    try {
-      const usage = await completionFreeTierLimiter.consume(claims?.uid)
-      ws.send(Buffer.from(JSON.stringify({ usage })))
-    }
-    catch (e: any) {
-      const rateLimiterError = e?.message || "You're requesting at too high a rate. Please wait "
-      logger(`Error in rate limiting stage: ${e.message}`, "error")
-      ws.send(Buffer.from(JSON.stringify({ error: `Error in rate limiting: ${rateLimiterError}` })))
-      return ws.close()
-    }
+    if (claims?.isSub) completionFreeTierLimiter.consume(claims?.uid)
+      .then((usage) => {
+
+        ws.send(Buffer.from(JSON.stringify({ usage })))
+      })
+      .catch((e: any) => {
+        const rateLimiterError = e?.message || "You're requesting at too high a rate. Please wait "
+        logger(`Error in rate limiting stage: ${e.message}`, "error")
+        ws.send(Buffer.from(JSON.stringify({ error: `Error in rate limiting: ${rateLimiterError}` })))
+        return ws.close()
+      });
     try {
       if (!Buffer.isBuffer(rawData)) return ws.send(Buffer.from(JSON.stringify({ error: "Invalid input type. Expected BufferLike" })))
       // Parse and validate input
