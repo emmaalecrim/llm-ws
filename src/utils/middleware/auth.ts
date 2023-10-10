@@ -31,7 +31,7 @@ async function authenticate(req: Request, res: any, next: NextFunction) {
         return next()
     } catch (e: any) {
         logger(`Error in auth middleware: ${e.message}`, "error")
-        return res.status(401).json({ error: e.message });
+        return next(e)
     }
 }
 
@@ -46,7 +46,7 @@ async function authenticateWithFirebase(req: Request, res: any, next: NextFuncti
         return next()
     } catch (e: any) {
         logger(`Error in firebase auth middleware: ${e.message}`, "error")
-        return res.status(401).json({ error: e.message });
+        return next(e)
     }
 }
 
