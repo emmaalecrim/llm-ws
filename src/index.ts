@@ -129,15 +129,15 @@ wss.on('connection', async function connection(ws: WebSocket, _: any, claims: jw
   ws.on('pong', heartbeat); // WebSocket Ping/Pong
   ws.on('message', async (rawData: RawData) => {
     // You can later move the rate limiting to the controller if you want to rate limit more granularly
-    if (!claims?.isSub) completionFreeTierLimiter.consume(claims?.uid, 1)
-      .then((usage) =>
-        ws.send(Buffer.from(JSON.stringify({ usage }))))
-      .catch((e: any) => {
-        const rateLimiterError = e?.message || "You've exceeded your free tier usage. Please upgrade to a paid plan."
-        logger(`Error in message usage limiter: ${rateLimiterError}`, "error")
-        ws.send(Buffer.from(JSON.stringify({ error: `Error in connection rate-limit stage: ${rateLimiterError}` })))
-        return ws.close()
-      });
+    // if (!claims?.isSub) completionFreeTierLimiter.consume(claims?.uid, 1)
+    //   .then((usage) =>
+    //     ws.send(Buffer.from(JSON.stringify({ usage }))))
+    //   .catch((e: any) => {
+    //     const rateLimiterError = e?.message || "You've exceeded your free tier usage. Please upgrade to a paid plan."
+    //     logger(`Error in message usage limiter: ${rateLimiterError}`, "error")
+    //     ws.send(Buffer.from(JSON.stringify({ error: `Error in connection rate-limit stage: ${rateLimiterError}` })))
+    //     return ws.close()
+    //   });
     try {
       if (!Buffer.isBuffer(rawData)) return ws.send(Buffer.from(JSON.stringify({ error: "Invalid input type. Expected BufferLike" })))
       // Parse and validate input
