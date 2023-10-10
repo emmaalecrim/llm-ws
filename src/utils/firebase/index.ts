@@ -9,7 +9,8 @@ config();
 // In your .env, set these two variables
 // GOOGLE_CLOUD_PROJECT=truenation-dev
 // GOOGLE_APPLICATION_CREDENTIALS=truenation-dev-6b80d0c98966.json
-const cred: Credential = (process.env.GOOGLE_APPLICATION_CREDENTIALS) ? cert(process.env.GOOGLE_APPLICATION_CREDENTIALS) : applicationDefault()
+const isDev = process.env.NODE_ENV === "development"
+const cred: Credential = isDev ? cert(process.env.GOOGLE_APPLICATION_CREDENTIALS || "") : applicationDefault()
 const app = initializeApp({
     credential: cred,
 });
