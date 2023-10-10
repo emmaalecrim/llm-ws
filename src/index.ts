@@ -95,7 +95,7 @@ server.on('upgrade', async function upgrade(req: Request, socket, head) {
     if (!ip) throw new Error("No IP found, cant limit and wont upgrade.")
     usageLimiter.consume(ip)
       .catch((e: any) => {
-        logger(`Error in rate limiting stage of connect listener: ${e.message}`, "error")
+        logger(`Error in upgrade usage limiter: ${e.message}`, "error")
         return socket.destroy()
       });
     try {
@@ -133,8 +133,8 @@ wss.on('connection', async function connection(ws: WebSocket, _: any, claims: jw
       .then((usage) =>
         ws.send(Buffer.from(JSON.stringify({ usage }))))
       .catch((e: any) => {
-        const rateLimiterError = e?.message || "You're connecting at too high a rate. Please wait before trying again."
-        logger(`Error in connection rate-limit stage: ${e.message}`, "error")
+        const rateLimiterError = e?.message || "You've exceeded your free tier usage. Please upgrade to a paid plan."
+        logger(`Error in message usage limiter: ${e.message}`, "error")
         ws.send(Buffer.from(JSON.stringify({ error: `Error in connection rate-limit stage: ${rateLimiterError}` })))
         return ws.close()
       });
