@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
 import { checkSubscriptionStatus, getAuthUser, getUserData } from './utils/firebase';
 import { completionFreeTierLimiter, usageLimiter } from './utils/rate-limiting';
 // Middleware 
-import { authenticate, authenticateWithFirebase } from './utils/middleware/auth';
+import { authenticate, authenticateWithFirebase, Claims } from './utils/middleware/auth';
 import rateLimiterMiddleware from './utils/middleware/rate-limiting';
 import cors from 'cors';
 // Controllers 
@@ -91,16 +91,25 @@ const server = app.listen(PORT, () => logger(`Listening on port ${PORT}`));
 server.on('upgrade', async function upgrade(req: Request, socket, head) {
   socket.on('error', handleWebsocketError);
   try {
-    usageLimiter.consume(req.ip)
+    const ip: string = req.socket.remoteAddress || ""
+    if (!ip) throw new Error("No IP found, cant limit and wont upgrade.")
+    usageLimiter.consume(ip)
       .catch((e: any) => {
         logger(`Error in rate limiting stage of connect listener: ${e.message}`, "error")
         return socket.destroy()
       });
-    authenticate(req, {}, () => null)
-    // @ts-ignore - claims is not a property of Request
-    if (!req?.claims?.uid) {
-      socket.write(Buffer.from(JSON.stringify({ error: `Bad Auth.` })))
-      return socket.destroy()
+    try {
+      const token: string = req?.headers?.["sec-websocket-protocol"] || ""
+      if (!token) throw new Error("No ID token provided")
+      const claims = jwt.verify(token, JWT_SECRET) as Claims
+      // @ts-ignore - claims is not a property of Request
+      req.claims = claims
+      // @ts-ignore - claims is not a property of Request
+      if (!claims.isSub) req.claims.isSub = await checkSubscriptionStatus(claims.uid)
+    } catch (e: any) {
+      logger(`Error in upgrade auth: ${e.message}`, "error")
+      socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+      return socket.destroy();
     }
     socket.removeListener('error', handleWebsocketError);
     return wss.handleUpgrade(req, socket, head, function done(ws) {
@@ -109,8 +118,8 @@ server.on('upgrade', async function upgrade(req: Request, socket, head) {
     });
   } catch (e: any) {
     logger(`Error in https to wss upgrade: ${e.message}`, "error")
-    socket.write(Buffer.from(JSON.stringify({ error: `Error in https to wss upgrade: ${e.message}` })))
-    return socket.destroy()
+    socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+    return socket.destroy();
   }
 });
 // WEBSOCKET SERVER - connects to express app via upgrade handler
