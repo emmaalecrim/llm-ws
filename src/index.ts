@@ -21,7 +21,7 @@ import { config } from 'dotenv';
 config();
 // Default for websockets is 80 but sveltekit uses 80 and GCP exposes 8080 by default
 const PORT = process.env.PORT || 8080;
-const JWT_SECRET = process.env.JWT_SECRET || 'secret';
+const JWT_SECRET = process.env.JWT_SECRET || '';
 const JWT_EXPIRATION = '2weeks';
 
 const app = express();
@@ -97,6 +97,11 @@ server.on('upgrade', async function upgrade(req: Request, socket, head) {
         return socket.destroy()
       });
     authenticate(req, {}, () => null)
+    // @ts-ignore - claims is not a property of Request
+    if (req?.claims?.uid) {
+      socket.write(Buffer.from(JSON.stringify({ error: `Bad auth` })))
+      return socket.destroy()
+    }
     socket.removeListener('error', handleWebsocketError);
     return wss.handleUpgrade(req, socket, head, function done(ws) {
       // @ts-ignore - claims is not a property of Request
