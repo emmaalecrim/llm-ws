@@ -21,7 +21,8 @@ export const parsers = {
         headers: ["emoji", "title", "text"]
     },
     classify: {
-        headers: ["original_comment", "category", "is_harmful", "description", "emoji"]
+        headers: ["original_comment", "category", "is_harmful", "description", "emoji"],
+        // TODO: add validation
     },
 }
 
