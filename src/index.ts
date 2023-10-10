@@ -93,7 +93,7 @@ server.on('upgrade', async function upgrade(req: Request, socket, head) {
   try {
     const ip: string = req.socket.remoteAddress || ""
     if (!ip) throw new Error("No IP found, cant limit and wont upgrade.")
-    usageLimiter.consume(ip)
+    usageLimiter.consume(ip, 1)
       .catch((e: any) => {
         logger(`Error in upgrade usage limiter: ${e.message}`, "error")
         return socket.destroy()
@@ -129,7 +129,7 @@ wss.on('connection', async function connection(ws: WebSocket, _: any, claims: jw
   ws.on('pong', heartbeat); // WebSocket Ping/Pong
   ws.on('message', async (rawData: RawData) => {
     // You can later move the rate limiting to the controller if you want to rate limit more granularly
-    if (!claims?.isSub) completionFreeTierLimiter.consume(claims?.uid)
+    if (!claims?.isSub) completionFreeTierLimiter.consume(claims?.uid, 1)
       .then((usage) =>
         ws.send(Buffer.from(JSON.stringify({ usage }))))
       .catch((e: any) => {
