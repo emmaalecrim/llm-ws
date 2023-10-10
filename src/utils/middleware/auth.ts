@@ -6,8 +6,7 @@ import logger from '../logging';
 
 
 config();
-const JWT_SECRET = process.env.JWT_SECRET || 'secret';
-// const JWT_EXPIRATION = '2weeks';
+const JWT_SECRET: string = process.env.JWT_SECRET || ""
 
 export type Claims = {
     uid: string,
@@ -19,10 +18,19 @@ export interface AuthenticatedRequest extends Request {
     claims: Claims
 }
 
+const getTokenFromHeader = (req: Request): string => {
+    try {
+        return req?.headers?.["sec-websocket-protocol"] || req?.header('Authorization')?.split(' ')[1] || ""
+    } catch (e: any) {
+        logger(`Error in getTokenFromHeader: ${e.message}`, "error")
+        return ""
+    }
+}
 
 async function authenticate(req: Request, res: any, next: NextFunction) {
     try {
-        const token: string = req?.headers?.["sec-websocket-protocol"] || req?.header('Authorization')?.split(' ')[1] || "";
+        const token = getTokenFromHeader(req)
+        if (!token) throw new Error("No token provided")
         const claims = jwt.verify(token, JWT_SECRET) as Claims
         // @ts-ignore - claims is not a property of Request
         req.claims = claims
