@@ -99,7 +99,7 @@ server.on('upgrade', async function upgrade(req: Request, socket, head) {
     authenticate(req, {}, () => null)
     // @ts-ignore - claims is not a property of Request
     if (req?.claims?.uid) {
-      socket.write(Buffer.from(JSON.stringify({ error: `Bad auth` })))
+      socket.write(Buffer.from(JSON.stringify({ error: `Bad Auth.` })))
       return socket.destroy()
     }
     socket.removeListener('error', handleWebsocketError);
