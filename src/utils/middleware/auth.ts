@@ -18,19 +18,11 @@ export interface AuthenticatedRequest extends Request {
     claims: Claims
 }
 
-const getTokenFromHeader = (req: Request): string => {
-    try {
-        return req?.headers?.["sec-websocket-protocol"] || req?.header('Authorization')?.split(' ')[1] || ""
-    } catch (e: any) {
-        logger(`Error in getTokenFromHeader: ${e.message}`, "error")
-        return ""
-    }
-}
 
 async function authenticate(req: Request, res: any, next: NextFunction) {
     try {
-        const token = getTokenFromHeader(req)
-        if (!token) throw new Error("No token provided")
+        const token: string = req?.header('Authorization')?.split(' ')[1] || "";
+        if (!token) throw new Error("No ID token provided")
         const claims = jwt.verify(token, JWT_SECRET) as Claims
         // @ts-ignore - claims is not a property of Request
         req.claims = claims
@@ -39,7 +31,7 @@ async function authenticate(req: Request, res: any, next: NextFunction) {
         return next()
     } catch (e: any) {
         logger(`Error in auth middleware: ${e.message}`, "error")
-        return next(e)
+        return res?.status(401).json({ error: e.message })
     }
 }
 
@@ -54,7 +46,7 @@ async function authenticateWithFirebase(req: Request, res: any, next: NextFuncti
         return next()
     } catch (e: any) {
         logger(`Error in firebase auth middleware: ${e.message}`, "error")
-        return next(e)
+        return res.status(401).json({ error: e.message });
     }
 }
 
