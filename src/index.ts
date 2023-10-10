@@ -134,7 +134,7 @@ wss.on('connection', async function connection(ws: WebSocket, _: any, claims: jw
         ws.send(Buffer.from(JSON.stringify({ usage }))))
       .catch((e: any) => {
         const rateLimiterError = e?.message || "You've exceeded your free tier usage. Please upgrade to a paid plan."
-        logger(`Error in message usage limiter: ${e.message}`, "error")
+        logger(`Error in message usage limiter: ${rateLimiterError}`, "error")
         ws.send(Buffer.from(JSON.stringify({ error: `Error in connection rate-limit stage: ${rateLimiterError}` })))
         return ws.close()
       });
