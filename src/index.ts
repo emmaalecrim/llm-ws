@@ -21,7 +21,7 @@ import { config } from 'dotenv';
 config();
 // Default for websockets is 80 but sveltekit uses 80 and GCP exposes 8080 by default
 const PORT = process.env.PORT || 8080;
-const JWT_SECRET = process.env.JWT_SECRET || '';
+const JWT_SECRET: string = process.env.JWT_SECRET || ""
 const JWT_EXPIRATION = '2weeks';
 
 const app = express();
@@ -39,13 +39,13 @@ app.use(
 );
 // Exchanges FB session token for longer lived JWT session token(not using JWT to avoid the potential leak)- 
 // you can very easily refactor this to be a user session later on
-app.post('/exchange', authenticateWithFirebase, async (req, res) => {
+app.get('/exchange', authenticateWithFirebase, async (req, res) => {
   try {
     // @ts-ignore - claims is not a property of Request
     const uid: string = req.claims?.uid;
     const isSub = await checkSubscriptionStatus(uid)
     // If the token is valid, use jwt to sign the uid. Sub is the standard claim for the user id and uid is a custom claim for ease. We respect the pattern.
-    const token = jwt.sign({ sub: uid, uid, isSub }, JWT_SECRET, { expiresIn: JWT_EXPIRATION });
+    const token = jwt.sign({ sub: uid, uid, isSub }, JWT_SECRET, { expiresIn: JWT_EXPIRATION, algorithm: 'HS512' });
     // Send it back
     return res.json({ token });
   } catch (e: any) {
@@ -98,7 +98,7 @@ server.on('upgrade', async function upgrade(req: Request, socket, head) {
       });
     authenticate(req, {}, () => null)
     // @ts-ignore - claims is not a property of Request
-    if (req?.claims?.uid) {
+    if (!req?.claims?.uid) {
       socket.write(Buffer.from(JSON.stringify({ error: `Bad Auth.` })))
       return socket.destroy()
     }
