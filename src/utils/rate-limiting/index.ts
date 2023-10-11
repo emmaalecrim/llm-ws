@@ -23,8 +23,7 @@ const limitersConfig = {
         keyPrefix: "usage",
         points: 100,
         duration: min,
-
-        execEvenly: true, // delay actions evenly.
+        execEvenly: false, // delay actions evenly.
     },
     // Note that this point system is great because we can calculate how many points to consume so users 
     // can get more out of their free tier(small context is cheaper) - nice comunity feature
