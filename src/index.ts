@@ -88,8 +88,9 @@ app.get('/usage', async (req, res) => {
 
 app.post('/feedback', async (req, res) => {
   try {
-    const { feedback } = req.body;
-    await saveFeedBack(feedback);
+    const feedback = req.body;
+    // @ts-ignore - claims is not a property of Request
+    await saveFeedBack({ ...feedback, uid: req?.claims?.uid });
     // @ts-ignore - claims is not a property of Request
     await completionFreeTierLimiter.reward(req?.claims?.uid, 1);
     return res.json({ success: true });
