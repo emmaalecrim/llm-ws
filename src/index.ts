@@ -64,7 +64,7 @@ app.get('/user', async (req, res) => {
       getAuthUser(uid),
       getUserData(uid)
     ])
-    // TODO: cherry pick data to send back to prevent leaking sensitive data
+    // enhancement: cherry pick data to send back to prevent leaking sensitive data
     return res.json({ user, data });
   } catch (e: any) {
     logger(`Error in /exchange: ${e.message}`, "error")
