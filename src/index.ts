@@ -92,8 +92,9 @@ app.post('/feedback', async (req, res) => {
     const feedback: Feedback = req.body;
     // @ts-ignore - claims is not a property of Request
     await saveFeedBack({ ...feedback, uid: req?.claims?.uid });
+    // Reward free users for giving feedback
     // @ts-ignore - claims is not a property of Request
-    await completionFreeTierLimiter.reward(req?.claims?.uid, 1);
+    if (!req?.claims?.isSub) await completionFreeTierLimiter.reward(req?.claims?.uid, 1);
     return res.json({ success: true });
   } catch (e: any) {
     logger(`Error in /feedback: ${e.message}`, "error");
