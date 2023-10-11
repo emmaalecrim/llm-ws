@@ -2,7 +2,7 @@ import express, { Request } from 'express';
 import { RawData, WebSocket, Server as WebSocketServer } from 'ws';
 // Auth and rate limiting
 import jwt from 'jsonwebtoken';
-import { checkSubscriptionStatus, getAuthUser, getUserData } from './utils/firebase';
+import { checkSubscriptionStatus, getAuthUser, getUserData, saveFeedBack } from './utils/firebase';
 import { completionFreeTierLimiter, usageLimiter } from './utils/rate-limiting';
 // Middleware 
 import { authenticate, authenticateWithFirebase } from './utils/middleware/auth';
@@ -82,6 +82,19 @@ app.get('/usage', async (req, res) => {
     return res.json({ usage });
   } catch (e: any) {
     logger(`Error in /usage: ${e.message}`, "error");
+    return res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/feedback', async (req, res) => {
+  try {
+    const { feedback } = req.body;
+    await saveFeedBack(feedback);
+    // @ts-ignore - claims is not a property of Request
+    await completionFreeTierLimiter.reward(req?.claims?.uid, 1);
+    return res.json({ success: true });
+  } catch (e: any) {
+    logger(`Error in /feedback: ${e.message}`, "error");
     return res.status(500).json({ error: e.message });
   }
 });
