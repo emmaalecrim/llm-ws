@@ -15,7 +15,7 @@ const ENCODING = "utf-8";
  * @param ws - The WebSocket connection.
  * @param payload - The parsed data received from the client.
  */
-const handlePromptTypes = async (ws: WebSocket, { prompt, data }: { prompt: PromptTypes, data: MessageParams }, retry: boolean = true): Promise<void> => {
+const handlePromptTypes = async (ws: WebSocket, { prompt, data }: { prompt: PromptTypes, data: MessageParams }, retry: number = 3): Promise<void> => {
     try {
         const { messages, config } = getMessages(prompt, data);
         logger({ messages, config })
@@ -24,9 +24,8 @@ const handlePromptTypes = async (ws: WebSocket, { prompt, data }: { prompt: Prom
             // @ts-expect-error - only parser keys are allowed
             const parsedCompletions = await parseCompletion(prompt, completions?.choices[0]?.message?.content || "")
                 .catch(e => {
-                    console.log('Whoops')
                     logger(`Error in handlePromptTypes parsing stage, retrying once more: ${JSON.stringify(e.message)}`, "error");
-                    if (retry) handlePromptTypes(ws, { prompt, data }, false)
+                    if (retry) handlePromptTypes(ws, { prompt, data }, retry--)
                 })
             logger({ parsedCompletions })
             return ws.send(Buffer.from(JSON.stringify(parsedCompletions), ENCODING));
