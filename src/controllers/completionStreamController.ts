@@ -51,7 +51,6 @@ const handlePromptTypes = async (ws: WebSocket, { prompt, data }: { prompt: Prom
  */
 const completionStreamController = async (ws: WebSocket, validatedData: InputData, claims: Claims): Promise<void> => {
     try {
-        // You can later move the rate limiting to the controller if you want to rate limit more granularly
         if (!claims?.isSub) completionFreeTierLimiter.consume(claims?.uid, 1)
             .then((usage) =>
                 ws.send(Buffer.from(JSON.stringify({ usage }))))
