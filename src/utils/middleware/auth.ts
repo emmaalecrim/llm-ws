@@ -3,20 +3,13 @@ import jwt from 'jsonwebtoken'
 import { config } from 'dotenv';
 import { getIdFromToken, checkSubscriptionStatus } from '../firebase';
 import logger from '../logging';
+import { Claims } from '../schemas/auth';
 
 
 config();
 const JWT_SECRET: string = process.env.JWT_SECRET || ""
 
-export type Claims = {
-    uid: string,
-    sub: string,
-    isSub: boolean
-}
 
-export interface AuthenticatedRequest extends Request {
-    claims: Claims
-}
 
 
 async function authenticate(req: Request, res: any, next: NextFunction) {

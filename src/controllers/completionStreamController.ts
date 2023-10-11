@@ -3,6 +3,8 @@ import { streamMessages } from "../utils/openai";
 import getMessages from "../utils/prompts/helpers";
 import { MessageParams, PromptTypes, InputData } from "../utils/schemas/completion";
 import logger from "../utils/logging";
+import { completionFreeTierLimiter } from '../utils/rate-limiting';
+import { Claims } from '../utils/schemas/auth';
 
 
 const ENCODING = "utf-8";
@@ -47,8 +49,18 @@ const handlePromptTypes = async (ws: WebSocket, { prompt, data }: { prompt: Prom
  * @param {InputData} validatedData
  * @returns {void}
  */
-const completionStreamController = async (ws: WebSocket, validatedData: InputData): Promise<void> => {
+const completionStreamController = async (ws: WebSocket, validatedData: InputData, claims: Claims): Promise<void> => {
     try {
+        // You can later move the rate limiting to the controller if you want to rate limit more granularly
+        if (!claims?.isSub) completionFreeTierLimiter.consume(claims?.uid, 1)
+            .then((usage) =>
+                ws.send(Buffer.from(JSON.stringify({ usage }))))
+            .catch((e: any) => {
+                const rateLimiterError = e?.message || "You've exceeded your free tier usage. Please upgrade to a paid plan."
+                logger(`Error in message usage limiter: ${rateLimiterError}`, "error")
+                ws.send(Buffer.from(JSON.stringify({ error: `Error in connection rate-limit stage: ${rateLimiterError}` })))
+                return ws.close()
+            });
         const { type, data } = validatedData;
         if (type === "summarize") throw new Error("summarize is not supported")
         return await handlePromptTypes(ws, { prompt: type, data });

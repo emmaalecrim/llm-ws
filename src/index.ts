@@ -5,14 +5,15 @@ import jwt from 'jsonwebtoken';
 import { checkSubscriptionStatus, getAuthUser, getUserData } from './utils/firebase';
 import { completionFreeTierLimiter, usageLimiter } from './utils/rate-limiting';
 // Middleware 
-import { authenticate, authenticateWithFirebase, Claims } from './utils/middleware/auth';
+import { authenticate, authenticateWithFirebase } from './utils/middleware/auth';
 import rateLimiterMiddleware from './utils/middleware/rate-limiting';
 import cors from 'cors';
 // Controllers 
 import completionController from './controllers/completionController';
 import completionStreamController from './controllers/completionStreamController';
-// Validation
+// Validation & typings
 import { InputData, validateInput } from './utils/schemas/completion';
+import { Claims } from './utils/schemas/auth';
 // Misc 
 import logger from './utils/logging';
 import { config } from 'dotenv';
@@ -125,19 +126,9 @@ server.on('upgrade', async function upgrade(req: Request, socket, head) {
 // WEBSOCKET SERVER - connects to express app via upgrade handler
 const wss = new WebSocketServer({ noServer: true });
 
-wss.on('connection', async function connection(ws: WebSocket, _: any, claims: jwt.JwtPayload) {
+wss.on('connection', async function connection(ws: WebSocket, _: any, claims: Claims) {
   ws.on('pong', heartbeat); // WebSocket Ping/Pong
   ws.on('message', async (rawData: RawData) => {
-    // You can later move the rate limiting to the controller if you want to rate limit more granularly
-    // if (!claims?.isSub) completionFreeTierLimiter.consume(claims?.uid, 1)
-    //   .then((usage) =>
-    //     ws.send(Buffer.from(JSON.stringify({ usage }))))
-    //   .catch((e: any) => {
-    //     const rateLimiterError = e?.message || "You've exceeded your free tier usage. Please upgrade to a paid plan."
-    //     logger(`Error in message usage limiter: ${rateLimiterError}`, "error")
-    //     ws.send(Buffer.from(JSON.stringify({ error: `Error in connection rate-limit stage: ${rateLimiterError}` })))
-    //     return ws.close()
-    //   });
     try {
       if (!Buffer.isBuffer(rawData)) return ws.send(Buffer.from(JSON.stringify({ error: "Invalid input type. Expected BufferLike" })))
       // Parse and validate input
@@ -149,11 +140,10 @@ wss.on('connection', async function connection(ws: WebSocket, _: any, claims: jw
       // Move to controllers
       switch (payload.mode) {
         case "stream":
-          return completionStreamController(ws, payload)
+          return completionStreamController(ws, payload, claims)
         default:
-          return completionController(ws, payload)
+          return completionController(ws, payload, claims)
       }
-
     } catch (e: any) {
       logger(`Error in controller: ${e.message}`, "error")
       ws.send(Buffer.from(JSON.stringify({ error: `Error in controller: ${e.message}` })))
