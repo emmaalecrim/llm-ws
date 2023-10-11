@@ -1,3 +1,5 @@
+import { OperationType } from "./completion";
+
 export type Feedback = {
     // Calls is a sequence of specific actions/requests made by the user.
     // for example, if the user sends feedback after using the reply flow(suggest then reply)
@@ -5,10 +7,11 @@ export type Feedback = {
     calls: Call[]; // Record of what the user did and what the server responded with(so we can debug missing args or bad prompts)
     comment: string; // User's comment,
     uid: string; // User's uid
+    resource: string; // Hash of the content the user is giving feedback on
 };
 
 export type Call = {
-    type: "improve" | "reply" | "suggest" | "classify"; // Whatever type is used in the op
+    type: OperationType;
     request: any;
-    response?: string | string[] | object; // TODO: improve this type to also include metadata about request { version, model, etc }
+    response: any;
 };

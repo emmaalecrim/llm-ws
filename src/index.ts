@@ -14,6 +14,7 @@ import completionStreamController from './controllers/completionStreamController
 // Validation & typings
 import { InputData, validateInput } from './utils/schemas/completion';
 import { Claims } from './utils/schemas/auth';
+import { Feedback } from './utils/schemas/feedback';
 // Misc 
 import logger from './utils/logging';
 import { config } from 'dotenv';
@@ -88,7 +89,7 @@ app.get('/usage', async (req, res) => {
 
 app.post('/feedback', async (req, res) => {
   try {
-    const feedback = req.body;
+    const feedback: Feedback = req.body;
     // @ts-ignore - claims is not a property of Request
     await saveFeedBack({ ...feedback, uid: req?.claims?.uid });
     // @ts-ignore - claims is not a property of Request
