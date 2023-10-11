@@ -1,7 +1,10 @@
 import csv = require("csvtojson");
+import { output as classifyOut } from "../utils/schemas/classify"
+import { output as suggestOut } from "../utils/schemas/suggest"
+
 
 // https://github.com/Keyang/node-csvtojson
-export const csvToJson = async (csvString: string, headers: string[] | undefined = undefined): Promise<object[]> => csv({
+export const csvToJson = async (csvString: string, headers: string[] | undefined = undefined): Promise<any> => csv({
     noheader: true,
     escape: "\\",
     headers,
@@ -18,14 +21,16 @@ export function isJSON(str: string) {
 
 export const parsers = {
     suggest: {
-        headers: ["emoji", "title", "text"]
+        headers: ["emoji", "title", "text"],
+        validator: (json: classifyOut) => suggestOut.parse(json),
     },
     classify: {
         headers: ["original_comment", "category", "is_harmful", "description", "emoji"],
-        // TODO: add validation
+        validator: (json: classifyOut) => classifyOut.parse(json),
     },
 }
 
-export function parseCompletion(type: "suggest" | "classify", str: string) {
-    return csvToJson(str, parsers[type].headers)
+export async function parseCompletion(type: "suggest" | "classify", str: string) {
+    const json = await csvToJson(str, parsers[type].headers)
+    return parsers[type].validator(json)
 }
