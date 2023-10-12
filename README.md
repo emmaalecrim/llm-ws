@@ -20,6 +20,6 @@ Navigate to the project folder in your terminal and run `yarn install`. This com
 - `yarn run deploy:prod`: Deploy with production settings.
 - `yarn run auth:refresh`: Re-authenticate Google and Firebase CLI.
 
-## Generate keys for JWT authentication:
+## Generate keys for JWT authentication
 
 - `ssh-keygen -t rsa -b 4096 -m PEM -E SHA512 -f jwtRS512.key -N "" && openssl rsa -in jwtRS512.key -pubout -outform PEM -out jwtRS512.key.pub && cat jwtRS512.key && cat jwtRS512.key.pub && rm jwtRS512.key jwtRS512.key.pub`
