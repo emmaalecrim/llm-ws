@@ -5,7 +5,7 @@ import { parseCompletion, parsers } from "../utils/parsing";
 import logger from "../utils/logging";
 import { InputData, PromptTypes, MessageParams } from "../utils/schemas/completion";
 import { Claims } from "../utils/schemas/auth";
-// import { completionFreeTierLimiter, usageLimiter } from '../utils/rate-limiting';
+import { waitInQueueForGPT } from "../utils/rate-limiting";
 
 
 const ENCODING = "utf-8";
@@ -19,6 +19,7 @@ const handlePromptTypes = async (ws: WebSocket, { prompt, data }: { prompt: Prom
     try {
         const { messages, config } = getMessages(prompt, data);
         logger({ messages, config })
+        await waitInQueueForGPT(1)
         const completions = await sendMessages(messages, config);
         if (Object.keys(parsers).includes(prompt)) {
             // @ts-expect-error - only parser keys are allowed

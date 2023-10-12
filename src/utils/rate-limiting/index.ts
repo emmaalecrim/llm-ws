@@ -1,4 +1,4 @@
-import { RateLimiterMemory } from 'rate-limiter-flexible';
+import { RateLimiterMemory, RateLimiterQueue } from 'rate-limiter-flexible';
 
 const min = 60;
 const hour = 60 * min;
@@ -33,20 +33,14 @@ const limitersConfig = {
         duration: day,
         execEvenly: false,
     },
-    // This is not implemented yet, wait for gateway
-    // "fact-check": {
-
-    //     points: 9,
-    //     duration: month,
-    // },
-    "gpt-3.5-turbo": {
-        keyPrefix: 'gpt-3.5-turbo',
-        points: 90000,
+    "gpt-3.5-turbo-rpm": {
+        keyPrefix: 'gpt-3.5-turbo-rpm',
+        points: 3500,
         duration: min,
     },
-    "gpt-4": {
-        keyPrefix: 'gpt-4',
-        points: 10000,
+    "gpt-3.5-turbo-tpm": {
+        keyPrefix: 'gpt-3.5-turbo-tpm',
+        points: 90000,
         duration: min,
     },
 }
@@ -58,7 +52,22 @@ function getInMemRateLimiter(type: keyof typeof limitersConfig = "default") {
     return rateLimiter
 }
 
+const gptRPMLimiter = getInMemRateLimiter("gpt-3.5-turbo-rpm")
+const gptTPMLimiter = getInMemRateLimiter("gpt-3.5-turbo-tpm")
+
+const gptRPMQueue = new RateLimiterQueue(gptRPMLimiter)
+const gptTPMQueue = new RateLimiterQueue(gptTPMLimiter)
+
+
+export const waitInQueue = async (queue: RateLimiterQueue, cost: number = 1) => await queue.removeTokens(cost)
+
 export const usageLimiter = getInMemRateLimiter()
 export const completionFreeTierLimiter = getInMemRateLimiter("completion")
-// export const factCheckFreeTierLimiter = new RateLimiterUnion(usageLimiter, getInMemRateLimiter("fact-check"))
+
+
+export const waitInQueueForGPT = (tokenCost: number) => Promise.race([waitInQueue(gptRPMQueue), waitInQueue(gptTPMQueue, tokenCost)])
+
+
+
+
 
