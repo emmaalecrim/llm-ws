@@ -128,7 +128,6 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
-truenation-dev-a37502b3819c.json
 
 lib/
 
