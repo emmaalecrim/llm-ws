@@ -41,6 +41,7 @@ export const UserMessageParams = z.object({
         .openapi({ title: "originalText", description: "The original text the user is operating on. Can be any string and is only used by the customize type operation ACT" }),
     tone: z.string().optional()
         .openapi({ title: "tone", description: "tone of the message, ie: positive, negative, neutral. Can be any string and is only used by the tone type operation" }),
+    language: z.string().optional().openapi({ title: "language", description: "language of the message, ie: english, french, espanish." }),
 })
     .openapi({ title: 'UserMessageParams', description: "Parameters for the user message(in the prompt)" });
 
