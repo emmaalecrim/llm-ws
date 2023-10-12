@@ -65,7 +65,10 @@ export const usageLimiter = getInMemRateLimiter()
 export const completionFreeTierLimiter = getInMemRateLimiter("completion")
 
 
-export const waitInQueueForGPT = (tokenCost: number) => Promise.race([waitInQueue(gptRPMQueue), waitInQueue(gptTPMQueue, tokenCost)])
+export const waitInQueueForGPT = async (tokenCost: number) => {
+    await waitInQueue(gptRPMQueue)
+    await waitInQueue(gptTPMQueue, tokenCost)
+}
 
 
 
