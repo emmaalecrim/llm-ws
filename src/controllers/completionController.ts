@@ -6,6 +6,7 @@ import logger from "../utils/logging";
 import { InputData, PromptTypes, MessageParams } from "../utils/schemas/completion";
 import { Claims } from "../utils/schemas/auth";
 import { waitInQueueForGptRpm, countTokensAndWaitInQ, gptTPMQueue } from "../utils/rate-limiting";
+import openaiTokenCounter from 'openai-gpt-token-counter';
 
 
 const ENCODING = "utf-8";
@@ -23,8 +24,9 @@ const handlePromptTypes = async (ws: WebSocket, { prompt, data }: { prompt: Prom
         await countTokensAndWaitInQ(messages)
         const completions = await sendMessages(messages, config);
         const { usage, choices } = completions
-        logger({ usage })
-        gptTPMQueue.removeTokens(usage?.completionTokens || 2000) // consume token from queue but dont wait
+        gptTPMQueue.removeTokens(
+            usage?.completionTokens ||
+            openaiTokenCounter.text("gpt-3.5-turbo")) // consume token from queue but dont wait
         if (Object.keys(parsers).includes(prompt)) {
             // @ts-expect-error - only parser keys are allowed
             const parsedCompletions = await parseCompletion(prompt, choices[0]?.message?.content || "")
