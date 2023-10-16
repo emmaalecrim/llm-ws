@@ -11,6 +11,7 @@ Navigate to the project folder in your terminal and run `yarn install`. This com
 - `yarn run lint`: Lint and fix potential issues in both JavaScript and TypeScript files.
 - `yarn run build`: Transpile TypeScript to JavaScript (outputs to a `dist` folder at root).
 - `yarn run build:watch`: Similar to `build`, but watches for changes in the TypeScript files and transpiles them on-the-fly.
+- `yarn run redis` or `yarn run redis:dev`: Starts a Redis server locally on port 6379
 - `yarn run dev`: Starts the server in development mode with hot reloading enabled.
 - `yarn run docker:build`: Create a Docker image for the application.
 - `yarn run docker:run`: Run the Docker image locally on port 8080.
