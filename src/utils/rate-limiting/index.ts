@@ -1,4 +1,6 @@
-import { RateLimiterMemory, RateLimiterQueue } from 'rate-limiter-flexible';
+import redisClient from '../redis';
+import { RateLimiterMemory, RateLimiterQueue, RateLimiterRedis } from 'rate-limiter-flexible'
+
 
 const min = 60;
 const hour = 60 * min;
@@ -46,28 +48,37 @@ const limitersConfig = {
 }
 
 
+export function getRedisRateLimiter(type: keyof typeof limitersConfig = "default") {
+    const rateLimiter = new RateLimiterRedis({
+        storeClient: redisClient,
+        insuranceLimiter: getInMemRateLimiter(type),
+        ...limitersConfig[type]
+    });
+    return rateLimiter
+}
+
 
 function getInMemRateLimiter(type: keyof typeof limitersConfig = "default") {
     const rateLimiter = new RateLimiterMemory(limitersConfig[type]);
     return rateLimiter
 }
 
-const gptRPMLimiter = getInMemRateLimiter("gpt-3.5-turbo-rpm")
-const gptTPMLimiter = getInMemRateLimiter("gpt-3.5-turbo-tpm")
+const gptRPMLimiter = getRedisRateLimiter("gpt-3.5-turbo-rpm")
+const gptTPMLimiter = getRedisRateLimiter("gpt-3.5-turbo-tpm")
 
-const gptRPMQueue = new RateLimiterQueue(gptRPMLimiter)
-const gptTPMQueue = new RateLimiterQueue(gptTPMLimiter)
+export const gptRPMQueue = new RateLimiterQueue(gptRPMLimiter)
+export const gptTPMQueue = new RateLimiterQueue(gptTPMLimiter)
 
 
 export const waitInQueue = async (queue: RateLimiterQueue, cost: number = 1) => await queue.removeTokens(cost)
 
-export const usageLimiter = getInMemRateLimiter()
-export const completionFreeTierLimiter = getInMemRateLimiter("completion")
+export const usageLimiter = getRedisRateLimiter()
+export const completionFreeTierLimiter = getRedisRateLimiter("completion")
 
 
-export const waitInQueueForGPT = async (tokenCost: number) => {
-    await waitInQueue(gptRPMQueue)
-    await waitInQueue(gptTPMQueue, tokenCost)
+export const waitInQueueForGPT = async (tpmCost: number, rpmCost: number = 1,) => {
+    await waitInQueue(gptRPMQueue, rpmCost)
+    await waitInQueue(gptTPMQueue, tpmCost)
 }
 
 
