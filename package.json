@@ -11,6 +11,7 @@
     "build": "tsc",
     "build:watch": "tsc --watch",
     "dev": "nodemon ./src/index.ts",
+    "redis": "docker run -p 6379:6379 -it redis/redis-stack-server:latest",
     "docker:build": "docker build -t llm-ws .",
     "docker:run": "docker run -p 8080:8080 llm-ws",
     "deploy:build": "gcloud config set project truenation-dev && gcloud builds submit --region=global --config cloudbuild.yaml",
