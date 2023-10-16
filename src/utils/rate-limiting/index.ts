@@ -54,13 +54,14 @@ const limitersConfig = {
 export function getRedisRateLimiter(type: keyof typeof limitersConfig = "default") {
     const rateLimiter = new RateLimiterRedis({
         storeClient: redisClient,
+        insuranceLimiter: getInMemRateLimiter(type),
         ...limitersConfig[type]
     });
     return rateLimiter
 }
 
 
-export function getInMemRateLimiter(type: keyof typeof limitersConfig = "default") {
+function getInMemRateLimiter(type: keyof typeof limitersConfig = "default") {
     const rateLimiter = new RateLimiterMemory(limitersConfig[type]);
     return rateLimiter
 }
