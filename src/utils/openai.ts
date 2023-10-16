@@ -1,4 +1,4 @@
-import { ChatCompletions, GetChatCompletionsOptions, OpenAIClient, OpenAIKeyCredential } from "@azure/openai";
+import { ChatCompletions, ChatMessage, GetChatCompletionsOptions, OpenAIClient, OpenAIKeyCredential } from "@azure/openai";
 // Load the .env file if it exists
 import * as dotenv from "dotenv";
 dotenv.config();
@@ -7,7 +7,7 @@ const client = new OpenAIClient(new OpenAIKeyCredential(process.env.OPENAI_KEY |
 
 
 const sendMessages = (
-  messages: any[],
+  messages: ChatMessage[],
   config: GetChatCompletionsOptions = {},
   model: string = "gpt-3.5-turbo"
 ): Promise<ChatCompletions> => client.getChatCompletions(
@@ -17,7 +17,7 @@ const sendMessages = (
 );
 
 const streamMessages = (
-  messages: any[],
+  messages: ChatMessage[],
   config: GetChatCompletionsOptions = {},
   model: string = "gpt-3.5-turbo"
 ): AsyncIterable<ChatCompletions> => client.listChatCompletions(
