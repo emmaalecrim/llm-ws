@@ -1,8 +1,8 @@
-import redis from 'redis'
+import { createClient } from 'redis'
 import logger from './logging';
 
 
-const redisClient = redis.createClient({
+const redisClient = createClient({
     disableOfflineQueue: false,
 });
 
