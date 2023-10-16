@@ -31,6 +31,7 @@
     "firebase-admin": "^11.9.0",
     "jsonwebtoken": "^9.0.2",
     "normalize-text": "^2.4.1",
+    "openai-gpt-token-counter": "^1.1.0",
     "rate-limiter-flexible": "^3.0.0",
     "redis": "^4.6.10",
     "ws": "^8.13.0",

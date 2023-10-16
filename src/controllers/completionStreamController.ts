@@ -3,7 +3,7 @@ import { streamMessages } from "../utils/openai";
 import getMessages from "../utils/prompts/helpers";
 import { MessageParams, PromptTypes, InputData } from "../utils/schemas/completion";
 import logger from "../utils/logging";
-import { completionFreeTierLimiter, waitInQueueForGPT } from '../utils/rate-limiting';
+import { completionFreeTierLimiter, waitInQueueForGptRpm, countTokensAndWaitInQ, gptTPMQueue } from '../utils/rate-limiting';
 import { Claims } from '../utils/schemas/auth';
 
 
@@ -20,13 +20,15 @@ const debug = process.env.DEBUG === "true";
 const handlePromptTypes = async (ws: WebSocket, { prompt, data }: { prompt: PromptTypes, data: MessageParams }): Promise<void> => {
     // Getting message and configuration
     const { messages, config } = getMessages(prompt, data);
-    waitInQueueForGPT(1)
+    await waitInQueueForGptRpm(1)
+    await countTokensAndWaitInQ(messages)
     const events = streamMessages(messages, config);
     let loggingAccum = ""
     for await (const event of events) {
         ws.send(Buffer.from(JSON.stringify(event), ENCODING));
-
+        gptTPMQueue.removeTokens(1) // consume token from queue but dont wait
         if (debug) {
+            logger(`Usage ${event.usage}`)
             for (const choice of event.choices) {
                 const delta = choice.delta?.content;
                 if (delta != undefined) {

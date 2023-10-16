@@ -1,5 +1,7 @@
+import { ChatMessage } from '@azure/openai';
 import redisClient from '../redis';
 import { RateLimiterMemory, RateLimiterQueue, RateLimiterRedis } from 'rate-limiter-flexible'
+import openaiTokenCounter from 'openai-gpt-token-counter';
 
 
 const min = 60;
@@ -77,8 +79,17 @@ export const completionFreeTierLimiter = getRedisRateLimiter("completion")
 
 
 export const waitInQueueForGptRpm = async (rpmCost: number = 1) => await waitInQueue(gptRPMQueue, rpmCost)
-export const waitInQueueForGptTpm = async (tpmCost: number = 1) => await waitInQueue(gptTPMQueue, tpmCost)
 
+export const countTokensAndWaitInQ = async (messages: ChatMessage[], model: "gpt-3.5-turbo" | "gpt-4" = "gpt-3.5-turbo") => {
+    const count = openaiTokenCounter.chat(messages as Message[], model)
+    return await waitInQueue(gptTPMQueue, count)
+}
+
+interface Message {
+    role?: string;
+    content: string;
+    name?: string;
+}
 
 
 
