@@ -76,10 +76,8 @@ export const usageLimiter = getRedisRateLimiter()
 export const completionFreeTierLimiter = getRedisRateLimiter("completion")
 
 
-export const waitInQueueForGPT = async (tpmCost: number, rpmCost: number = 1,) => {
-    await waitInQueue(gptRPMQueue, rpmCost)
-    await waitInQueue(gptTPMQueue, tpmCost)
-}
+export const waitInQueueForGptRpm = async (rpmCost: number = 1) => await waitInQueue(gptRPMQueue, rpmCost)
+export const waitInQueueForGptTpm = async (tpmCost: number = 1) => await waitInQueue(gptTPMQueue, tpmCost)
 
 
 
