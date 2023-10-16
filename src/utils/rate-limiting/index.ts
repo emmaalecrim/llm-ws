@@ -54,14 +54,13 @@ const limitersConfig = {
 export function getRedisRateLimiter(type: keyof typeof limitersConfig = "default") {
     const rateLimiter = new RateLimiterRedis({
         storeClient: redisClient,
-        insuranceLimiter: getInMemRateLimiter(type),
         ...limitersConfig[type]
     });
     return rateLimiter
 }
 
 
-function getInMemRateLimiter(type: keyof typeof limitersConfig = "default") {
+export function getInMemRateLimiter(type: keyof typeof limitersConfig = "default") {
     const rateLimiter = new RateLimiterMemory(limitersConfig[type]);
     return rateLimiter
 }
@@ -83,7 +82,7 @@ export const waitInQueueForGptRpm = async (rpmCost: number = 1) => await waitInQ
 
 export const countTokensAndWaitInQ = async (messages: ChatMessage[], model: "gpt-3.5-turbo" | "gpt-4" = "gpt-3.5-turbo") => {
     const count = openaiTokenCounter.chat(messages as Message[], model)
-    logger(`Counting tokens for ${messages.length} messages`)
+    logger(`Counting tokens for ${messages.length} messages: ${count}`)
     return await waitInQueue(gptTPMQueue, count)
 }
 
