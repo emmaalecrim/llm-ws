@@ -40,6 +40,8 @@ app.use(
   }),
   rateLimiterMiddleware
 );
+// TODO: If token is invalid, it's probably incompatible. Send instructions for cleanup
+// (if you had used cookies that'd probably be smth you could do via headers)
 // Exchanges FB session token for longer lived JWT session token(not using JWT to avoid the potential leak)- 
 // you can very easily refactor this to be a user session later on
 app.get('/exchange', authenticateWithFirebase, async (req, res) => {
@@ -47,7 +49,8 @@ app.get('/exchange', authenticateWithFirebase, async (req, res) => {
     // @ts-ignore - claims is not a property of Request
     const uid: string = req.claims?.uid;
     const isSub = await checkSubscriptionStatus(uid)
-    // If the token is valid, use jwt to sign the uid. Sub is the standard claim for the user id and uid is a custom claim for ease. We respect the pattern.
+    // If the token is valid, use jwt to sign the uid. 
+    // Sub is the standard claim for the user id and uid is a custom claim for ease. We respect the pattern.
     const token = jwt.sign({ sub: uid, uid, isSub }, JWT_SECRET, { expiresIn: JWT_EXPIRATION, algorithm: 'HS512' });
     // Send it back
     return res.json({ token });
