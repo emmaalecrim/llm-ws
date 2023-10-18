@@ -35,6 +35,7 @@ app.get('/health', (req, res) => {
 app.use(
   express.json(),
   cors({
+    // TODO: Whitelist other services and truenation.ai, localhost and whatever vercel uses for dev branchea
     origin: true,
   }),
   rateLimiterMiddleware
