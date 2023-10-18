@@ -3,7 +3,8 @@ import { streamMessages } from "../utils/openai";
 import getMessages from "../utils/prompts/helpers";
 import { MessageParams, PromptTypes, InputData } from "../utils/schemas/completion";
 import logger from "../utils/logging";
-import { completionFreeTierLimiter, waitInQueueForGptRpm, countTokensAndWaitInQ, gptTPMQueue } from '../utils/rate-limiting';
+import { waitInQueueForGptRpm, waitInQueueForGptTpm, gptTPMQueue, completionFreeTierLimiter } from "../utils/rate-limiting";
+import { countMessageTokens, } from "../utils/rate-limiting/helpers";
 import { Claims } from '../utils/schemas/auth';
 
 
@@ -21,7 +22,9 @@ const handlePromptTypes = async (ws: WebSocket, { prompt, data }: { prompt: Prom
     // Getting message and configuration
     const { messages, config } = getMessages(prompt, data);
     await waitInQueueForGptRpm(1)
-    await countTokensAndWaitInQ(messages)
+    const Ot = countMessageTokens(messages) // Counts outbound tokens
+    await waitInQueueForGptTpm(Ot)
+    ws.send(Buffer.from(JSON.stringify({ usage: { promptTokens: Ot } }), ENCODING));
     const events = streamMessages(messages, config);
     let loggingAccum = ""
     for await (const event of events) {
