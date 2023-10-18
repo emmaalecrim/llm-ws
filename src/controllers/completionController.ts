@@ -5,8 +5,8 @@ import { parseCompletion, parsers } from "../utils/parsing";
 import logger from "../utils/logging";
 import { InputData, PromptTypes, MessageParams } from "../utils/schemas/completion";
 import { Claims } from "../utils/schemas/auth";
-import { waitInQueueForGptRpm, countTokensAndWaitInQ, gptTPMQueue } from "../utils/rate-limiting";
-import openaiTokenCounter from 'openai-gpt-token-counter';
+import { waitInQueueForGptRpm, waitInQueueForGptTpm, gptTPMQueue } from "../utils/rate-limiting";
+import { countMessageTokens, countTextTokens } from "../utils/rate-limiting/helpers";
 
 
 const ENCODING = "utf-8";
@@ -21,12 +21,14 @@ const handlePromptTypes = async (ws: WebSocket, { prompt, data }: { prompt: Prom
         const { messages, config } = getMessages(prompt, data);
         logger({ messages, config })
         await waitInQueueForGptRpm(1)
-        await countTokensAndWaitInQ(messages)
+        const Ot = countMessageTokens(messages) // Counts outbound tokens
+        await waitInQueueForGptTpm(Ot)
         const completions = await sendMessages(messages, config);
-        const { usage, choices } = completions
-        gptTPMQueue.removeTokens(
-            usage?.completionTokens ||
-            openaiTokenCounter.text("gpt-3.5-turbo")) // consume token from queue but dont wait
+        const { usage, choices } = completions // No comming back with usage
+        const It = usage?.completionTokens || countTextTokens(choices[0]?.message?.content || "")// Counts inbound tokens
+        gptTPMQueue.removeTokens(It) // consume token from queue but dont wait
+        // Count inbound tokens from completion response. Tt = Ot + It
+        ws.send(Buffer.from(JSON.stringify({ usage: { totalTokens: Ot + It, generatedTokens: It, promptTokens: Ot } }), ENCODING));
         if (Object.keys(parsers).includes(prompt)) {
             // @ts-expect-error - only parser keys are allowed
             const parsedCompletions = await parseCompletion(prompt, choices[0]?.message?.content || "")
