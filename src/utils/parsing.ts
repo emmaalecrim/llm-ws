@@ -1,6 +1,7 @@
 import csv = require("csvtojson");
 import { output as classifyOut } from "../utils/schemas/classify"
 import { output as suggestOut } from "../utils/schemas/suggest"
+import logger from "./logging";
 
 
 // https://github.com/Keyang/node-csvtojson
@@ -32,5 +33,6 @@ export const parsers = {
 
 export async function parseCompletion(type: "suggest" | "classify", str: string) {
     const json = await csvToJson(str, parsers[type].headers)
+    logger({ json })
     return parsers[type].validator(json)
 }
