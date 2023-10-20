@@ -17,7 +17,7 @@ export const output = z
   .object({
     original_comment: z.string(),
     category: z.string().toLowerCase().trim(),
-    is_harmful: z.enum(["yes", "no", "maybe"]),
+    is_harmful: z.enum(["yes", "no", "maybe"]).or(z.literal("")),
     description: z.string().toLowerCase().trim(),
     emoji: z.coerce.string().emoji().or(z.literal("")),
   })
