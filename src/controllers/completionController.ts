@@ -28,7 +28,7 @@ const handlePromptTypes = async (ws: WebSocket, { prompt, data }: { prompt: Prom
         const It = usage?.completionTokens || countTextTokens(choices[0]?.message?.content || "")// Counts inbound tokens
         gptTPMQueue.removeTokens(It) // consume token from queue but dont wait
         // Count inbound tokens from completion response. Tt = Ot + It
-        ws.send(Buffer.from(JSON.stringify({ usage: { totalTokens: Ot + It, generatedTokens: It, promptTokens: Ot } }), ENCODING));
+        // ws.send(Buffer.from(JSON.stringify({ usage: { totalTokens: Ot + It, generatedTokens: It, promptTokens: Ot } }), ENCODING));
         if (Object.keys(parsers).includes(prompt)) {
             // @ts-expect-error - only parser keys are allowed
             const parsedCompletions = await parseCompletion(prompt, choices[0]?.message?.content || "")
