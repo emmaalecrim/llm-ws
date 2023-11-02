@@ -40,6 +40,8 @@ app.use(
   }),
   rateLimiterMiddleware
 );
+app.get('/ip', (req, res) => res.json({ ip: req.ip }))
+
 // TODO: If token is invalid, it's probably incompatible. Send instructions for cleanup
 // (if you had used cookies that'd probably be smth you could do via headers)
 // Exchanges FB session token for longer lived JWT session token(not using JWT to avoid the potential leak)- 
