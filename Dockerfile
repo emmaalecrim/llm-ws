@@ -6,6 +6,7 @@ COPY tsconfig*.json ./
 # CP bellow not working 
 # COPY truenation-dev-*.json ./
 RUN npm install
+# RUN GEOLITE2_LICENSE_KEY=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 node node_modules/geoip-country/scripts/updatedb.js
 COPY . ./
 RUN npm run build
 

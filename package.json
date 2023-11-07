@@ -19,7 +19,8 @@
     "deploy": "gcloud config set project truenation-dev && gcloud builds submit --region=global --config cloudbuild.yaml && gcloud run deploy glasswall-ws --image europe-west2-docker.pkg.dev/truenation-dev/glasswall-ws/main",
     "deploy:prod": "gcloud builds submit --region=global --config prod-cloudbuild.yaml && gcloud run deploy glasswall-ws --image europe-docker.pkg.dev/truefilter-10000/glasswall-ws/main",
     "auth": "gcloud auth login",
-    "document-api": "ts-node ./src/utils/schemas/generateOAPI.ts"
+    "document-api": "ts-node ./src/utils/schemas/generateOAPI.ts",
+    "update:geolite2": "GEOLITE2_LICENSE_KEY=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 node node_modules/geoip-country/scripts/updatedb.js "
   },
   "dependencies": {
     "@anatine/zod-openapi": "^2.2.0",
@@ -29,6 +30,7 @@
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "firebase-admin": "^11.9.0",
+    "geoip-country": "^4.2.38",
     "ioredis": "^5.3.2",
     "jsonwebtoken": "^9.0.2",
     "normalize-text": "^2.4.1",
@@ -40,6 +42,7 @@
   "devDependencies": {
     "@types/cors": "^2.8.14",
     "@types/express": "^4.17.17",
+    "@types/geoip-country": "^4.0.1",
     "@types/ws": "^8.5.5",
     "@typescript-eslint/eslint-plugin": "^5.50.0",
     "eslint": "^8.0.1",
@@ -51,5 +54,8 @@
     "openapi3-ts": "^4.1.2",
     "ts-node": "^10.9.1",
     "typescript": "^5.1.6"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

@@ -18,7 +18,7 @@ import { Feedback } from './utils/schemas/feedback';
 // Misc 
 import logger from './utils/logging';
 import { config } from 'dotenv';
-
+import { getIpData } from './utils/geoip';
 
 config();
 // Default for websockets is 80 but sveltekit uses 80 and GCP exposes 8080 by default
@@ -40,7 +40,16 @@ app.use(
   }),
   rateLimiterMiddleware
 );
-app.get('/ip', (req, res) => res.json({ ip: req.ip }))
+// export function ipToCountryCode(ip: string): string | undefined {
+// 	return lookup(ip)?.country;
+// } 
+app.get('/location', (req, res) => {
+  const ip: string = req?.ip?.split(":")[3] || ""
+  if (!ip) return res.status(500).json({ error: "No IP found" });
+  const geo = getIpData(ip)
+  logger({ ip, geo }, "info")
+  return res.json({ geo });
+})
 
 // TODO: If token is invalid, it's probably incompatible. Send instructions for cleanup
 // (if you had used cookies that'd probably be smth you could do via headers)
